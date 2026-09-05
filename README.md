@@ -1,6 +1,6 @@
 # Chess Pro Analyzer
 
-A web app for **chess analysis**: import your Chess.com games, replay them move by move, let Stockfish classify every ply, and get a **Coach** that explains *why* a move is strong or weak — built for training, not just reading an evaluation bar.
+A web app for **chess analysis**: import your Chess.com games, replay them move by move, let Stockfish classify every ply, and get a **Coach** that explains *why* a move is strong or weak, built for training, not just reading an evaluation bar.
 
 ---
 
