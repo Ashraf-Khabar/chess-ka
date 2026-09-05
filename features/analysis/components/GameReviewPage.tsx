@@ -227,6 +227,9 @@ export default function GameReviewPage({ gameId }: GameReviewPageProps) {
             showLiveBestArrow
             fillContainer
             hideSizeControls
+            initialOrientation={
+              perspectiveColor === "b" ? "black" : "white"
+            }
           />
         </section>
 
@@ -268,6 +271,11 @@ export default function GameReviewPage({ gameId }: GameReviewPageProps) {
                     history={game.history}
                     plyIndex={game.plyIndex}
                     onSelectPly={game.goToPly}
+                    mainLine={game.mainLine}
+                    forkPly={game.forkPly}
+                    variation={game.variation}
+                    isOnVariation={game.isOnVariation}
+                    onSelectMainPly={game.goToMainPly}
                     currentQuality={classification.quality}
                     compact
                   />

@@ -7,8 +7,8 @@ import { describeMoveFacts } from "@/features/analysis/lib/moveDiagnosis";
 import type { AppLanguage } from "@/features/settings/lib/settingsTypes";
 
 /**
- * Builds a short coaching summary for the reviewed ply.
- * Detailed "why" text is provided separately via explainWhyWrong.
+ * Builds a coaching summary for the reviewed ply.
+ * Detailed "why" text comes from explainWhyWrong / explainWhyRight.
  */
 export function explainMove(params: {
   quality: MoveQuality | null;
@@ -41,7 +41,6 @@ export function explainMove(params: {
       playedSan: san,
       language: lang,
     });
-    // Keep it short: SAN + optional fact (capture/check…). Quality lives in the badge.
     if (facts) {
       return fr
         ? `${who} joue ${san} (${facts}).`
@@ -69,6 +68,8 @@ export function explainMove(params: {
     params.lossCp !== null
       ? Math.max(0, Math.round(params.lossCp))
       : null;
+  const lossPawns =
+    loss !== null ? (loss / 100).toFixed(loss >= 100 ? 1 : 2) : null;
   const best = params.bestMoveSan;
   const san = params.playedSan;
   const facts = describeMoveFacts({
@@ -76,45 +77,123 @@ export function explainMove(params: {
     playedSan: params.playedSan,
     language: lang,
   });
-  const factBit = facts ? ` (${facts})` : "";
+  const what = facts
+    ? fr
+      ? `Ce coup ${facts}.`
+      : `This move ${facts}.`
+    : null;
 
   switch (params.quality) {
     case "brilliant":
-      return fr
-        ? `${san} est Brillant${params.isSacrifice ? " (sacrifice sain)" : ""}${factBit}. Vous gardez l’avantage tout en offrant du matériel — continuez cette idée.`
-        : `${san} is Brilliant${params.isSacrifice ? " (sound sacrifice)" : ""}${factBit}. You keep the edge while offering material — stay on this idea.`;
+      return [
+        fr
+          ? `${san} est Brillant${params.isSacrifice ? " (sacrifice sain)" : ""}.`
+          : `${san} is Brilliant${params.isSacrifice ? " (sound sacrifice)" : ""}.`,
+        what,
+        fr
+          ? `Vous forcez l’avantage tout en offrant du matériel — continuez cette idée.`
+          : `You force an edge while offering material — stay on this idea.`,
+      ]
+        .filter(Boolean)
+        .join(" ");
     case "great":
-      return fr
-        ? `${san} est Superbe${factBit}. Ce coup fait basculer l’évaluation en votre faveur : très bonne trouvaille.`
-        : `${san} is a Great move${factBit}. It swings the evaluation your way — a strong find.`;
+      return [
+        fr
+          ? `${san} est Superbe — très bonne trouvaille.`
+          : `${san} is a Great move — a strong find.`,
+        what,
+        fr
+          ? `Ce coup fait basculer clairement l’évaluation en votre faveur.`
+          : `It clearly swings the evaluation your way.`,
+      ]
+        .filter(Boolean)
+        .join(" ");
     case "best":
-      return fr
-        ? `${san} est le meilleur coup du moteur${factBit}. Parfait — restez sur cette ligne.`
-        : `${san} is the engine’s best${factBit}. Perfect — stay on this line.`;
+      return [
+        fr
+          ? `${san} est le meilleur coup du moteur.`
+          : `${san} is the engine’s best move.`,
+        what,
+        fr ? `Parfait — restez sur cette ligne.` : `Perfect — stay on this line.`,
+      ]
+        .filter(Boolean)
+        .join(" ");
     case "excellent":
-      return fr
-        ? `${san} est Excellent (${label})${factBit}. Perte minime${loss !== null ? ` (~${loss} cp)` : ""}${best && !params.isEngineBest ? ` ; le moteur préférait ${best}` : ""}.`
-        : `${san} is Excellent${factBit}. Tiny loss${loss !== null ? ` (~${loss} cp)` : ""}${best && !params.isEngineBest ? `; engine preferred ${best}` : ""}.`;
+      return [
+        fr
+          ? `${san} est Excellent.`
+          : `${san} is Excellent.`,
+        what,
+        fr
+          ? `Perte minime${loss !== null ? ` (~${loss} cp)` : ""}${best && !params.isEngineBest ? ` ; le moteur préférait ${best}` : ""}.`
+          : `Tiny loss${loss !== null ? ` (~${loss} cp)` : ""}${best && !params.isEngineBest ? `; engine preferred ${best}` : ""}.`,
+      ]
+        .filter(Boolean)
+        .join(" ");
     case "good":
-      return fr
-        ? `${san} est un bon coup${factBit}. Solide${best ? `, même si ${best} était un peu plus précis` : ""}.`
-        : `${san} is a good move${factBit}. Solid${best ? `, even if ${best} was a bit more accurate` : ""}.`;
+      return [
+        fr ? `${san} est un bon coup (${label}).` : `${san} is a good move.`,
+        what,
+        fr
+          ? `Solide${best && best !== san ? `, même si ${best} était un peu plus précis` : ""}.`
+          : `Solid${best && best !== san ? `, even if ${best} was a bit more accurate` : ""}.`,
+      ]
+        .filter(Boolean)
+        .join(" ");
     case "inaccuracy":
-      return fr
-        ? `${san} est une imprécision${loss !== null ? ` (−${loss} cp)` : ""}${factBit}.${best ? ` Préférez ${best}.` : ""}`
-        : `${san} is an inaccuracy${loss !== null ? ` (−${loss} cp)` : ""}${factBit}.${best ? ` Prefer ${best}.` : ""}`;
+      return [
+        fr
+          ? `${san} est une imprécision${lossPawns ? ` (−${lossPawns} pion)` : ""}.`
+          : `${san} is an inaccuracy${lossPawns ? ` (−${lossPawns} pawn)` : ""}.`,
+        what,
+        best
+          ? fr
+            ? `Le coup plus précis était ${best}.`
+            : `The more precise move was ${best}.`
+          : null,
+      ]
+        .filter(Boolean)
+        .join(" ");
     case "mistake":
-      return fr
-        ? `${san} est une erreur${loss !== null ? ` (−${loss} cp)` : ""}${factBit}.${best ? ` Le bon coup était ${best}.` : ""}`
-        : `${san} is a mistake${loss !== null ? ` (−${loss} cp)` : ""}${factBit}.${best ? ` The right move was ${best}.` : ""}`;
+      return [
+        fr
+          ? `${san} est une erreur${lossPawns ? ` (−${lossPawns} pion)` : ""}.`
+          : `${san} is a mistake${lossPawns ? ` (−${lossPawns} pawn)` : ""}.`,
+        what,
+        best
+          ? fr
+            ? `Il fallait jouer ${best}.`
+            : `You needed to play ${best}.`
+          : null,
+      ]
+        .filter(Boolean)
+        .join(" ");
     case "miss":
-      return fr
-        ? `Occasion manquée avec ${san}${loss !== null ? ` (−${loss} cp)` : ""}${factBit}. Vous aviez une chance gagnante.${best ? ` Il fallait ${best}.` : ""}`
-        : `Miss with ${san}${loss !== null ? ` (−${loss} cp)` : ""}${factBit}. You had a winning chance.${best ? ` Play ${best} instead.` : ""}`;
+      return [
+        fr
+          ? `Occasion manquée avec ${san}${lossPawns ? ` (−${lossPawns} pion)` : ""}.`
+          : `Miss with ${san}${lossPawns ? ` (−${lossPawns} pawn)` : ""}.`,
+        what,
+        fr
+          ? `Vous aviez une chance gagnante${best ? ` avec ${best}` : ""}.`
+          : `You had a winning chance${best ? ` with ${best}` : ""}.`,
+      ]
+        .filter(Boolean)
+        .join(" ");
     case "blunder":
-      return fr
-        ? `${san} est une gaffe${loss !== null ? ` (−${loss} cp)` : ""}${factBit}.${best ? ` Corrigez avec ${best}.` : ""}`
-        : `${san} is a blunder${loss !== null ? ` (−${loss} cp)` : ""}${factBit}.${best ? ` Fix it with ${best}.` : ""}`;
+      return [
+        fr
+          ? `${san} est une gaffe${lossPawns ? ` (−${lossPawns} pion)` : ""}.`
+          : `${san} is a blunder${lossPawns ? ` (−${lossPawns} pawn)` : ""}.`,
+        what,
+        best
+          ? fr
+            ? `Corrigez avec ${best}.`
+            : `Fix it with ${best}.`
+          : null,
+      ]
+        .filter(Boolean)
+        .join(" ");
     default:
       return "";
   }

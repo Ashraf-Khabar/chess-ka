@@ -38,10 +38,15 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    const fromCookie = parseSettings(getCookie(SETTINGS_COOKIE));
+    const raw =
+      getCookie(SETTINGS_COOKIE) ?? getCookie("cpa-settings-v2");
+    const fromCookie = parseSettings(raw);
     setSettings(fromCookie);
     setHydrated(true);
     applyDocumentSettings(fromCookie);
+    if (raw && !getCookie(SETTINGS_COOKIE)) {
+      setCookie(SETTINGS_COOKIE, JSON.stringify(fromCookie));
+    }
   }, []);
 
   const persist = useCallback((next: AppSettings) => {

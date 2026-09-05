@@ -179,14 +179,14 @@ nav {
 
 /* —— App chrome —— */
 .app-nav {
-  border-bottom: 1px solid color-mix(in srgb, var(--line) 90%, transparent);
-  background: color-mix(in srgb, var(--surface) 82%, transparent);
-  backdrop-filter: blur(14px) saturate(1.15);
+  border-bottom: 1px solid color-mix(in srgb, var(--line) 80%, transparent);
+  background: color-mix(in srgb, var(--surface-elevated) 78%, transparent);
+  backdrop-filter: blur(16px) saturate(1.2);
 }
 
 .app-nav-inner {
   display: flex;
-  height: 3.65rem;
+  height: 3.85rem;
   width: 100%;
   align-items: center;
   justify-content: space-between;
@@ -209,43 +209,48 @@ nav {
 .app-brand {
   display: inline-flex;
   align-items: center;
-  gap: 0.55rem;
+  gap: 0.65rem;
   min-width: 0;
 }
 
 .app-brand-mark {
-  width: 0.55rem;
-  height: 0.55rem;
-  border-radius: 999px;
-  background: var(--accent);
-  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 18%, transparent);
+  width: 1.55rem;
+  height: 1.55rem;
+  border-radius: 0.35rem;
   flex-shrink: 0;
+  background:
+    linear-gradient(45deg, var(--accent) 25%, transparent 25%) -0.1rem 0 / 0.78rem 0.78rem,
+    linear-gradient(-45deg, var(--accent) 25%, transparent 25%) -0.1rem 0 / 0.78rem 0.78rem,
+    linear-gradient(45deg, transparent 75%, var(--accent) 75%) -0.1rem 0 / 0.78rem 0.78rem,
+    linear-gradient(-45deg, transparent 75%, var(--accent) 75%) -0.1rem 0 / 0.78rem 0.78rem,
+    var(--ink);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--ink) 18%, transparent);
 }
 
 .app-nav-links {
   align-items: center;
-  gap: 0.2rem;
-  padding: 0.2rem;
-  border-radius: 0.85rem;
+  gap: 0.15rem;
+  padding: 0.22rem;
+  border-radius: 0.75rem;
   border: 1px solid var(--line);
-  background: color-mix(in srgb, var(--surface-soft) 70%, transparent);
+  background: color-mix(in srgb, var(--surface-soft) 85%, transparent);
 }
 
 .app-nav-link {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  border-radius: 0.65rem;
-  padding: 0.45rem 0.8rem;
+  border-radius: 0.55rem;
+  padding: 0.48rem 0.85rem;
   font-size: 0.84rem;
-  font-weight: 600;
+  font-weight: 650;
   color: var(--ink-muted);
   transition: background 150ms ease, color 150ms ease;
 }
 
 .app-nav-link:hover {
   color: var(--ink);
-  background: color-mix(in srgb, var(--surface-elevated) 80%, transparent);
+  background: color-mix(in srgb, var(--surface-elevated) 90%, transparent);
 }
 
 .app-nav-link[data-active="true"] {
@@ -255,16 +260,17 @@ nav {
 
 .app-nav-chip {
   display: inline-flex;
-  height: 2.35rem;
+  height: 2.4rem;
   align-items: center;
   gap: 0.4rem;
-  border-radius: 0.65rem;
+  border-radius: 0.55rem;
   border: 1px solid var(--line);
-  padding: 0 0.75rem;
+  padding: 0 0.8rem;
   font-size: 0.7rem;
   font-weight: 700;
   letter-spacing: 0.06em;
   color: var(--ink-muted);
+  background: var(--surface);
   transition: border-color 150ms ease, color 150ms ease, background 150ms ease;
 }
 
@@ -276,11 +282,11 @@ nav {
 
 .app-nav-icon {
   display: inline-flex;
-  height: 2.4rem;
-  width: 2.4rem;
+  height: 2.45rem;
+  width: 2.45rem;
   align-items: center;
   justify-content: center;
-  border-radius: 0.65rem;
+  border-radius: 0.55rem;
   color: var(--ink);
   border: 1px solid transparent;
   transition: background 150ms ease, border-color 150ms ease;
@@ -316,7 +322,7 @@ nav {
   min-height: 0;
   width: 100%;
   max-width: none;
-  height: calc(100dvh - 4rem);
+  height: calc(100dvh - 3.85rem);
   overflow: hidden;
   padding: 0.5rem;
 }
@@ -454,11 +460,9 @@ nav {
 }
 
 .review-tab[data-active="true"] {
-  background: color-mix(in srgb, var(--accent-soft) 90%, var(--surface-elevated));
+  background: var(--accent-soft);
   color: var(--accent);
-  box-shadow:
-    0 0 0 1px color-mix(in srgb, var(--accent) 28%, transparent),
-    0 6px 16px color-mix(in srgb, var(--accent) 12%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 28%, transparent);
 }
 
 .review-tab-panel {
@@ -545,19 +549,15 @@ nav {
 
 .studio-main,
 .panel-shell {
-  border: 1px solid color-mix(in srgb, var(--line) 85%, var(--accent) 15%);
+  border: 1px solid color-mix(in srgb, var(--line) 92%, var(--accent) 8%);
   background:
     linear-gradient(
       155deg,
-      color-mix(in srgb, var(--surface-elevated) 92%, transparent) 0%,
-      var(--surface) 55%,
-      color-mix(in srgb, var(--surface) 88%, var(--background)) 100%
+      color-mix(in srgb, var(--surface-elevated) 96%, transparent) 0%,
+      var(--surface) 100%
     );
-  border-radius: 1.05rem;
-  box-shadow:
-    0 1px 0 color-mix(in srgb, #fff 4%, transparent) inset,
-    0 20px 48px rgba(0, 0, 0, 0.38);
-  backdrop-filter: blur(8px);
+  border-radius: 1.1rem;
+  box-shadow: var(--shadow);
 }
 
 .studio-main {
@@ -621,20 +621,14 @@ nav {
 }
 
 .btn-primary {
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--accent) 92%, #fff) 0%,
-    var(--accent) 100%
-  );
-  color: #062116;
-  border-radius: 0.7rem;
-  padding: 0.7rem 1.05rem;
+  background: var(--accent);
+  color: var(--on-accent);
+  border-radius: 0.65rem;
+  padding: 0.7rem 1.1rem;
   font-size: 0.875rem;
   font-weight: 700;
-  box-shadow:
-    0 1px 0 color-mix(in srgb, #fff 35%, transparent) inset,
-    0 8px 18px color-mix(in srgb, var(--accent) 22%, transparent);
-  transition: filter 150ms ease, transform 150ms ease, box-shadow 150ms ease;
+  box-shadow: 0 1px 0 color-mix(in srgb, #fff 22%, transparent) inset;
+  transition: filter 150ms ease, transform 150ms ease;
 }
 
 .btn-primary:hover {
@@ -643,15 +637,11 @@ nav {
 
 .btn-primary:active {
   transform: translateY(1px);
-  box-shadow:
-    0 1px 0 color-mix(in srgb, #fff 25%, transparent) inset,
-    0 4px 10px color-mix(in srgb, var(--accent) 18%, transparent);
 }
 
 .btn-primary:disabled {
   opacity: 0.6;
   cursor: not-allowed;
-  box-shadow: none;
 }
 
 .btn-ghost {
@@ -668,20 +658,17 @@ nav {
 
 .board-frame {
   padding: 0.75rem;
-  border-radius: 1rem;
+  border-radius: 1.05rem;
   background:
-    linear-gradient(145deg, rgba(61, 214, 140, 0.14), transparent 42%),
-    linear-gradient(180deg, #1f2c26, #121916);
+    linear-gradient(145deg, var(--panel-glow), transparent 48%),
+    linear-gradient(180deg, var(--surface-elevated), var(--surface-soft));
   border: 1px solid var(--line);
   position: relative;
   transition: max-width 380ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .board-frame-rich {
-  box-shadow:
-    0 24px 50px rgba(0, 0, 0, 0.45),
-    0 0 0 1px rgba(61, 214, 140, 0.08),
-    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  box-shadow: var(--shadow);
 }
 
 .board-bevel {
@@ -690,8 +677,8 @@ nav {
   inset: 0.45rem;
   border-radius: 0.7rem;
   box-shadow:
-    inset 0 0 0 1px rgba(255, 255, 255, 0.04),
-    inset 0 8px 18px rgba(0, 0, 0, 0.18);
+    inset 0 0 0 1px color-mix(in srgb, var(--ink) 6%, transparent),
+    inset 0 8px 18px color-mix(in srgb, var(--ink) 6%, transparent);
   z-index: 2;
 }
 
@@ -699,8 +686,8 @@ nav {
   border-radius: 0.45rem;
   overflow: hidden;
   box-shadow:
-    inset 0 0 0 1px rgba(0, 0, 0, 0.35),
-    0 10px 30px rgba(0, 0, 0, 0.35);
+    inset 0 0 0 1px color-mix(in srgb, var(--ink) 12%, transparent),
+    0 10px 28px color-mix(in srgb, var(--ink) 12%, transparent);
 }
 
 /* Soften square highlight changes without fighting piece transforms */
@@ -757,10 +744,10 @@ nav {
   position: absolute;
   inset: 0;
   border-radius: 2px;
-  background: rgba(8, 14, 12, 0.28);
-  backdrop-filter: blur(3px) saturate(0.65);
-  -webkit-backdrop-filter: blur(3px) saturate(0.65);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+  background: color-mix(in srgb, var(--ink) 22%, transparent);
+  backdrop-filter: blur(3px) saturate(0.7);
+  -webkit-backdrop-filter: blur(3px) saturate(0.7);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 8%, transparent);
   animation: squareBlurIn 180ms ease both;
 }
 
@@ -806,8 +793,8 @@ nav {
   align-items: center;
   justify-content: center;
   border-radius: 999px;
-  background: rgba(12, 18, 16, 0.78);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45);
+  background: color-mix(in srgb, var(--surface-elevated) 88%, var(--ink));
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--ink) 22%, transparent);
   animation: squareLoaderPop 280ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
@@ -1107,16 +1094,8 @@ nav {
 
 .coach-panel-v2 {
   background:
-    radial-gradient(
-      420px 160px at 100% 0%,
-      color-mix(in srgb, var(--accent) 10%, transparent),
-      transparent 70%
-    ),
-    linear-gradient(
-      160deg,
-      color-mix(in srgb, var(--surface-elevated) 95%, transparent),
-      var(--surface)
-    );
+    radial-gradient(420px 160px at 100% 0%, var(--panel-glow), transparent 70%),
+    linear-gradient(160deg, var(--surface-elevated), var(--surface));
 }
 
 .coach-header {
@@ -1132,9 +1111,9 @@ nav {
   width: 2.25rem;
   align-items: center;
   justify-content: center;
-  border-radius: 0.7rem;
+  border-radius: 0.55rem;
   color: var(--gold);
-  background: color-mix(in srgb, var(--gold) 14%, transparent);
+  background: color-mix(in srgb, var(--gold) 12%, transparent);
   border: 1px solid color-mix(in srgb, var(--gold) 28%, transparent);
   flex-shrink: 0;
 }
@@ -1231,6 +1210,14 @@ nav {
   padding: 0.15rem 0.1rem 0;
 }
 
+.move-variation {
+  margin-left: 0.35rem;
+  padding: 0.55rem 0.65rem;
+  border-radius: 0.65rem;
+  border: 1px dashed color-mix(in srgb, var(--accent) 40%, var(--line));
+  background: color-mix(in srgb, var(--accent-soft) 70%, var(--surface-elevated));
+}
+
 .quality-badge {
   display: inline-flex;
   align-items: center;
@@ -1243,38 +1230,75 @@ nav {
 }
 
 .quality-best {
+  background: rgba(90, 140, 40, 0.18);
+  color: #4d7c1f;
+}
+.quality-brilliant {
+  background: rgba(15, 140, 140, 0.16);
+  color: #0f766e;
+}
+.quality-great {
+  background: rgba(20, 150, 130, 0.16);
+  color: #0f766e;
+}
+.quality-excellent {
+  background: rgba(100, 150, 40, 0.16);
+  color: #4d7c0f;
+}
+.quality-good {
+  background: rgba(60, 140, 80, 0.14);
+  color: #3f7a4a;
+}
+.quality-inaccuracy {
+  background: rgba(200, 150, 20, 0.16);
+  color: #a16207;
+}
+.quality-mistake {
+  background: rgba(210, 110, 30, 0.16);
+  color: #c2410c;
+}
+.quality-miss {
+  background: rgba(210, 70, 90, 0.16);
+  color: #be123c;
+}
+.quality-blunder {
+  background: rgba(190, 40, 40, 0.16);
+  color: #b91c1c;
+}
+
+[data-color-scheme="dark"] .quality-best {
   background: rgba(150, 188, 75, 0.22);
   color: #b6e06a;
 }
-.quality-brilliant {
+[data-color-scheme="dark"] .quality-brilliant {
   background: rgba(27, 172, 166, 0.25);
   color: #5eead4;
 }
-.quality-great {
+[data-color-scheme="dark"] .quality-great {
   background: rgba(46, 204, 187, 0.24);
   color: #5eead4;
 }
-.quality-excellent {
+[data-color-scheme="dark"] .quality-excellent {
   background: rgba(129, 182, 76, 0.22);
   color: #a3e635;
 }
-.quality-good {
+[data-color-scheme="dark"] .quality-good {
   background: rgba(129, 182, 76, 0.16);
   color: #86efac;
 }
-.quality-inaccuracy {
+[data-color-scheme="dark"] .quality-inaccuracy {
   background: rgba(247, 198, 49, 0.2);
   color: #fbbf24;
 }
-.quality-mistake {
+[data-color-scheme="dark"] .quality-mistake {
   background: rgba(230, 145, 44, 0.22);
   color: #fb923c;
 }
-.quality-miss {
+[data-color-scheme="dark"] .quality-miss {
   background: rgba(232, 93, 76, 0.24);
   color: #fb7185;
 }
-.quality-blunder {
+[data-color-scheme="dark"] .quality-blunder {
   background: rgba(202, 52, 49, 0.25);
   color: #f87171;
 }

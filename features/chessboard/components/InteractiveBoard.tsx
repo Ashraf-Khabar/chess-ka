@@ -24,6 +24,7 @@ import {
   RotateCcw,
   Maximize2,
   Minimize2,
+  Undo2,
 } from "lucide-react";
 import type { UseChessGameResult } from "@/features/chessboard/hooks/useChessGame";
 import type { MoveQuality } from "@/features/analysis/lib/classifyMove";
@@ -145,6 +146,8 @@ interface InteractiveBoardProps {
   fillContainer?: boolean;
   /** Hide size +/- controls. */
   hideSizeControls?: boolean;
+  /** Whose side starts at the bottom (review: analyzing player). */
+  initialOrientation?: "white" | "black";
 }
 
 function InteractiveBoardComponent({
@@ -157,6 +160,7 @@ function InteractiveBoardComponent({
   showLiveBestArrow = true,
   fillContainer = false,
   hideSizeControls = false,
+  initialOrientation = "white",
 }: InteractiveBoardProps) {
   const { settings, updateSettings, t } = useSettings();
   const {
@@ -172,9 +176,18 @@ function InteractiveBoardComponent({
     reset,
     history,
     plyIndex,
+    isOnVariation,
+    returnToFork,
   } = game;
 
-  const [orientation, setOrientation] = useState<"white" | "black">("white");
+  const [orientation, setOrientation] = useState<"white" | "black">(
+    initialOrientation
+  );
+
+  useEffect(() => {
+    setOrientation(initialOrientation);
+  }, [initialOrientation]);
+
   const [moveFrom, setMoveFrom] = useState<Square | null>(null);
   const [optionSquares, setOptionSquares] = useState<
     Record<string, CSSProperties>
@@ -461,6 +474,15 @@ function InteractiveBoardComponent({
       >
         <FlipHorizontal2 size={16} />
       </NavButton>
+      {isOnVariation && (
+        <NavButton
+          label={t("board.returnFork")}
+          onClick={returnToFork}
+          emphasize
+        >
+          <Undo2 size={16} />
+        </NavButton>
+      )}
       {!fillContainer && (
         <NavButton label={t("board.reset")} onClick={reset}>
           <RotateCcw size={16} />
@@ -534,11 +556,13 @@ function NavButton({
   onClick,
   disabled,
   label,
+  emphasize = false,
 }: {
   children: React.ReactNode;
   onClick: () => void;
   disabled?: boolean;
   label: string;
+  emphasize?: boolean;
 }) {
   return (
     <button
@@ -547,9 +571,18 @@ function NavButton({
       title={label}
       onClick={onClick}
       disabled={disabled}
-      className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-[var(--line)] bg-[var(--surface-elevated)] text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-35"
+      className={`inline-flex h-9 items-center justify-center gap-1 rounded-md border transition disabled:cursor-not-allowed disabled:opacity-35 ${
+        emphasize
+          ? "w-auto px-2.5 border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent)] hover:bg-[var(--accent)] hover:text-[var(--on-accent)]"
+          : "w-9 border-[var(--line)] bg-[var(--surface-elevated)] text-[var(--ink)] hover:border-[var(--accent)] hover:text-[var(--accent)]"
+      }`}
     >
       {children}
+      {emphasize && (
+        <span className="hidden text-[10px] font-bold uppercase tracking-wide sm:inline">
+          {label}
+        </span>
+      )}
     </button>
   );
 }

@@ -270,6 +270,11 @@ export default function DashboardAnalysis() {
               history={game.history}
               plyIndex={game.plyIndex}
               onSelectPly={game.goToPly}
+              mainLine={game.mainLine}
+              forkPly={game.forkPly}
+              variation={game.variation}
+              isOnVariation={game.isOnVariation}
+              onSelectMainPly={game.goToMainPly}
               currentQuality={classification.quality}
             />
           </div>

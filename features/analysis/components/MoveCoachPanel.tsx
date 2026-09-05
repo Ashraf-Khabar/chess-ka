@@ -9,7 +9,10 @@ import {
   type MoveQuality,
 } from "@/features/analysis/lib/classifyMove";
 import { explainMove } from "@/features/analysis/lib/moveFeedback";
-import { explainWhyWrong } from "@/features/analysis/lib/moveDiagnosis";
+import {
+  explainWhyRight,
+  explainWhyWrong,
+} from "@/features/analysis/lib/moveDiagnosis";
 import { isSuboptimalQuality } from "@/features/analysis/lib/boardAnnotations";
 import { markerSrc } from "@/features/chessboard/lib/markerAssets";
 import { useSettings } from "@/features/settings/context/SettingsContext";
@@ -22,6 +25,14 @@ interface MoveCoachPanelProps {
   isUserPly?: boolean | null;
   opponentName?: string | null;
 }
+
+const POSITIVE_QUALITIES = new Set<MoveQuality>([
+  "brilliant",
+  "great",
+  "best",
+  "excellent",
+  "good",
+]);
 
 export default function MoveCoachPanel({
   classification,
@@ -40,7 +51,7 @@ export default function MoveCoachPanel({
 
   const coachingActive = isUserPly !== false;
 
-  const whyText = useMemo(() => {
+  const whyWrong = useMemo(() => {
     if (
       !coachingActive ||
       classification.isClassifying ||
@@ -65,6 +76,33 @@ export default function MoveCoachPanel({
     classification.playedSan,
     classification.quality,
     correctionLabel,
+    settings.language,
+  ]);
+
+  const whyRight = useMemo(() => {
+    if (
+      !coachingActive ||
+      classification.isClassifying ||
+      !classification.quality ||
+      !POSITIVE_QUALITIES.has(classification.quality)
+    ) {
+      return null;
+    }
+    return explainWhyRight({
+      fenBefore: classification.fenBefore,
+      playedSan: classification.playedSan,
+      bestUci: classification.bestMoveUci,
+      language: settings.language,
+      isSacrifice: classification.isSacrifice,
+    });
+  }, [
+    coachingActive,
+    classification.bestMoveUci,
+    classification.fenBefore,
+    classification.isClassifying,
+    classification.isSacrifice,
+    classification.playedSan,
+    classification.quality,
     settings.language,
   ]);
 
@@ -149,14 +187,17 @@ export default function MoveCoachPanel({
         )}
       </div>
 
-      {whyText && (
+      {whyWrong && (
         <div className="coach-card coach-card-why">
           <p className="coach-card-label">{t("coach.why")}</p>
-          <p className="coach-card-text">
-            {whyText
-              .replace(/^Pourquoi c’est faux\s*:\s*/i, "")
-              .replace(/^Why it’s wrong:\s*/i, "")}
-          </p>
+          <p className="coach-card-text">{whyWrong}</p>
+        </div>
+      )}
+
+      {whyRight && !whyWrong && (
+        <div className="coach-card coach-card-best">
+          <p className="coach-card-label">{t("coach.whyRight")}</p>
+          <p className="coach-card-text">{whyRight}</p>
         </div>
       )}
 

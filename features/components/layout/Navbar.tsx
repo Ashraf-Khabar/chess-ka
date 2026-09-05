@@ -21,11 +21,11 @@ export default function Navbar() {
       <div className="app-nav-inner">
         <Link href="/" className="app-brand group">
           <span className="app-brand-mark" aria-hidden />
-          <span className="font-display text-[1.35rem] leading-none tracking-tight sm:text-[1.5rem]">
+          <span className="font-display text-[1.4rem] leading-none tracking-tight sm:text-[1.65rem]">
             <span className="text-[var(--accent)] transition group-hover:brightness-110">
               Chess
-            </span>{" "}
-            <span className="text-[var(--ink)]">Pro</span>
+            </span>
+            <span className="text-[var(--ink)]"> Pro</span>
           </span>
         </Link>
 

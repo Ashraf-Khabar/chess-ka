@@ -68,7 +68,7 @@ export default function SettingsPage() {
           <Segmented
             value={settings.fontPair}
             options={[
-              { value: "sora", label: t("settings.font.sora") },
+              { value: "studio", label: t("settings.font.studio") },
               { value: "manrope", label: t("settings.font.manrope") },
               { value: "grotesk", label: t("settings.font.grotesk") },
             ]}
@@ -85,10 +85,10 @@ export default function SettingsPage() {
               updateSettings({ appTheme: appTheme as AppTheme })
             }
             options={[
-              { value: "forest", label: t("settings.appTheme.forest"), swatch: "#3dd68c" },
-              { value: "midnight", label: t("settings.appTheme.midnight"), swatch: "#6ea8ff" },
-              { value: "slate", label: t("settings.appTheme.slate"), swatch: "#5eead4" },
-              { value: "ember", label: t("settings.appTheme.ember"), swatch: "#ff8f5a" },
+              { value: "atelier", label: t("settings.appTheme.atelier"), swatch: "#0d7a4f" },
+              { value: "ink", label: t("settings.appTheme.ink"), swatch: "#3ecf8e" },
+              { value: "marble", label: t("settings.appTheme.marble"), swatch: "#0f6f7c" },
+              { value: "arena", label: t("settings.appTheme.arena"), swatch: "#c4a35a" },
             ]}
           />
         </SettingBlock>
@@ -340,7 +340,7 @@ function ToggleRow({
         }`}
       >
         <span
-          className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-[#0b0f0d] transition ${
+          className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-[var(--surface-elevated)] shadow-sm transition ${
             checked ? "translate-x-5" : ""
           }`}
         />
