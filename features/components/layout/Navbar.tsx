@@ -1,56 +1,130 @@
+"use client";
+
 import Link from "next/link";
-import { Settings, User, Menu, BookOpen, Activity } from "lucide-react";
+import { usePathname } from "next/navigation";
+import {
+  Settings,
+  BookOpen,
+  Activity,
+  Languages,
+} from "lucide-react";
+import { useSettings } from "@/features/settings/context/SettingsContext";
+import { GITHUB_REPO_URL } from "@/features/settings/lib/settingsTypes";
+import GitHubIcon from "@/features/components/icons/GitHubIcon";
 
 export default function Navbar() {
+  const pathname = usePathname();
+  const { t, settings, updateSettings } = useSettings();
+
   return (
-    <nav className="w-full bg-slate-900 text-slate-100 shadow-md">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          
-          {/* Logo & Brand */}
-          <div className="flex-shrink-0 flex items-center">
-            <Link href="/" className="text-xl font-bold tracking-wider flex items-center gap-2">
-              <span className="text-emerald-400">♟️ Chess</span>
-              <span>Pro Analyzer</span>
-            </Link>
-          </div>
+    <nav className="app-nav sticky top-0 z-40">
+      <div className="app-nav-inner">
+        <Link href="/" className="app-brand group">
+          <span className="app-brand-mark" aria-hidden />
+          <span className="font-display text-[1.35rem] leading-none tracking-tight sm:text-[1.5rem]">
+            <span className="text-[var(--accent)] transition group-hover:brightness-110">
+              Chess
+            </span>{" "}
+            <span className="text-[var(--ink)]">Pro</span>
+          </span>
+        </Link>
 
-          {/* Main Navigation Menu (Hidden on mobile) */}
-          <div className="hidden md:flex space-x-8">
-            <Link href="/" className="flex items-center gap-2 hover:text-emerald-400 transition-colors">
-              <Activity size={18} />
-              <span>Analysis Board</span>
-            </Link>
-            <Link href="/catalog" className="flex items-center gap-2 hover:text-emerald-400 transition-colors">
-              <BookOpen size={18} />
-              <span>Openings Catalog</span>
-            </Link>
-          </div>
+        <div className="app-nav-links hidden md:flex">
+          <NavLink href="/" icon={<Activity size={15} />} active={pathname === "/"}>
+            {t("nav.analysis")}
+          </NavLink>
+          <NavLink
+            href="/catalog"
+            icon={<BookOpen size={15} />}
+            active={pathname?.startsWith("/catalog") ?? false}
+          >
+            {t("nav.openings")}
+          </NavLink>
+          <NavLink
+            href="/settings"
+            icon={<Settings size={15} />}
+            active={pathname?.startsWith("/settings") ?? false}
+          >
+            {t("nav.settings")}
+          </NavLink>
+        </div>
 
-          {/* Right Side: Preferences & Auth */}
-          <div className="hidden md:flex items-center space-x-4">
-            <button className="p-2 hover:bg-slate-800 rounded-full transition-colors" title="Preferences">
-              <Settings size={20} />
-            </button>
-            <div className="h-6 w-px bg-slate-700 mx-2"></div> {/* Divider */}
-            <button className="text-sm font-medium hover:text-emerald-400 transition-colors">
-              Log in
-            </button>
-            <button className="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2">
-              <User size={16} />
-              Sign up
-            </button>
-          </div>
+        <div className="hidden items-center gap-2 md:flex">
+          <button
+            type="button"
+            onClick={() =>
+              updateSettings({
+                language: settings.language === "fr" ? "en" : "fr",
+              })
+            }
+            className="app-nav-chip"
+            title={t("settings.language")}
+          >
+            <Languages size={14} />
+            {settings.language.toUpperCase()}
+          </button>
 
-          {/* Mobile Menu Button */}
-          <div className="md:hidden flex items-center">
-            <button className="p-2 hover:bg-slate-800 rounded-md">
-              <Menu size={24} />
-            </button>
-          </div>
+          <Link
+            href={GITHUB_REPO_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn-primary inline-flex items-center gap-2 px-3 py-2 text-sm"
+            title={t("nav.support")}
+          >
+            <GitHubIcon size={15} />
+            GitHub
+          </Link>
+        </div>
 
+        <div className="flex items-center gap-1 md:hidden">
+          <Link
+            href="/catalog"
+            className="app-nav-icon"
+            aria-label={t("nav.openings")}
+          >
+            <BookOpen size={18} />
+          </Link>
+          <Link
+            href="/settings"
+            className="app-nav-icon"
+            aria-label={t("nav.settings")}
+          >
+            <Settings size={18} />
+          </Link>
+          <Link
+            href={GITHUB_REPO_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="app-nav-icon"
+            aria-label={t("nav.support")}
+          >
+            <GitHubIcon size={18} />
+          </Link>
         </div>
       </div>
     </nav>
+  );
+}
+
+function NavLink({
+  href,
+  children,
+  icon,
+  active = false,
+}: {
+  href: string;
+  children: React.ReactNode;
+  icon: React.ReactNode;
+  active?: boolean;
+}) {
+  return (
+    <Link
+      href={href}
+      data-active={active ? "true" : "false"}
+      className="app-nav-link"
+    >
+      {icon}
+      {children}
+    </Link>
   );
 }

@@ -1,10 +1,46 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
-import Navbar from "../components/layout/Navbar";
+import {
+  Outfit,
+  Syne,
+  Manrope,
+  Fraunces,
+  Space_Grotesk,
+  Literata,
+} from "next/font/google";
+import Navbar from "@/features/components/layout/Navbar";
+import MainShell from "@/features/components/layout/MainShell";
+import AppProviders from "@/features/settings/components/AppProviders";
 import "./globals.css";
 
-// Load Inter font for a clean, modern UI
-const inter = Inter({ subsets: ["latin"] });
+const outfit = Outfit({
+  subsets: ["latin"],
+  variable: "--font-outfit",
+});
+
+const syne = Syne({
+  subsets: ["latin"],
+  variable: "--font-syne",
+});
+
+const manrope = Manrope({
+  subsets: ["latin"],
+  variable: "--font-manrope",
+});
+
+const fraunces = Fraunces({
+  subsets: ["latin"],
+  variable: "--font-fraunces",
+});
+
+const spaceGrotesk = Space_Grotesk({
+  subsets: ["latin"],
+  variable: "--font-grotesk",
+});
+
+const literata = Literata({
+  subsets: ["latin"],
+  variable: "--font-literata",
+});
 
 export const metadata: Metadata = {
   title: "Chess Pro Analyzer",
@@ -17,15 +53,20 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={`${inter.className} bg-slate-50 min-h-screen flex flex-col`}>
-        {/* Global Navigation Bar */}
-        <Navbar />
-        
-        {/* Main Content Area */}
-        <main className="flex-grow w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
-          {children}
-        </main>
+    <html
+      lang="fr"
+      data-app-theme="atelier"
+      data-font="studio"
+      data-color-scheme="light"
+      suppressHydrationWarning
+    >
+      <body
+        className={`${outfit.variable} ${syne.variable} ${manrope.variable} ${fraunces.variable} ${spaceGrotesk.variable} ${literata.variable} font-sans min-h-dvh flex flex-col antialiased`}
+      >
+        <AppProviders>
+          <Navbar />
+          <MainShell>{children}</MainShell>
+        </AppProviders>
       </body>
     </html>
   );
