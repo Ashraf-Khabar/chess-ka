@@ -1,251 +1,250 @@
 # Chess Pro Analyzer
 
-Application web d’**analyse d’échecs** : tu charges tes parties Chess.com, tu les rejoues coup par coup, Stockfish classe chaque coup, et un **Coach** t’explique *pourquoi* un coup est bon ou mauvais — le tout dans une interface pensée pour l’entraînement, pas seulement pour lire une évaluation.
+A web app for **chess analysis**: import your Chess.com games, replay them move by move, let Stockfish classify every ply, and get a **Coach** that explains *why* a move is strong or weak — built for training, not just reading an evaluation bar.
 
 ---
 
-## Pourquoi ce projet existe
+## Why this project exists
 
-Les plateformes classiques (Chess.com, Lichess) sont excellentes pour jouer. En revanche, quand on veut **vraiment comprendre** une partie :
+Sites like Chess.com and Lichess are great for playing. When you want to **actually understand** a game, though:
 
-- l’évaluation moteur seule (`+1.2`) ne dit pas *ce qui se passe* sur l’échiquier ;
-- les symboles (`?!`, `??`) sans explication aident peu un joueur intermédiaire ;
-- on a souvent besoin d’**explorer une autre idée** sans perdre la ligne réelle de la partie ;
-- on veut rester dans **sa perspective** (ses pièces en bas, feedback sur *ses* coups).
+- an engine eval alone (`+1.2`) does not explain *what is happening* on the board;
+- symbols (`?!`, `??`) without commentary barely help intermediate players;
+- you often need to **try another idea** without losing the real game line;
+- you want to stay in **your perspective** (your pieces at the bottom, feedback on *your* moves).
 
-**Chess Pro Analyzer** répond à ça : une revue locale, claire, avec classification visuelle, coach pédagogique, variantes (forks), et catalogue d’ouvertures — sans compte obligatoire au-delà du pseudo Chess.com pour importer les parties.
+**Chess Pro Analyzer** addresses that: local, clear review with visual classification, a pedagogical coach, variations (forks), and an openings catalog — no account required beyond your Chess.com username to import games.
 
 ---
 
-## Ce que tu peux faire
+## What you can do
 
-| Fonctionnalité | À quoi ça sert |
+| Feature | Why it’s there |
 |---|---|
-| **Bibliothèque Chess.com** | Récupérer tes dernières parties pour les revoir hors du site |
-| **Revue plein écran** (`/analyze/[gameId]`) | Analyser une partie sans scroll inutile, focus échiquier + panneau |
-| **Stockfish (WASM)** | Évaluation live + classification des coups dans le navigateur |
-| **Symboles de qualité (PNG)** | Brillant → Gaffe, lisibles sur la case jouée |
-| **Coach** | Texte clair : ce que fait le coup, pourquoi c’est faux / fort, coup à jouer |
-| **Perspective joueur** | Tes pièces en bas ; le coach commente *tes* coups, pas ceux de l’adversaire |
-| **Fork / variante** | Tester un autre coup sans écraser la partie ; bouton *Retour au fork* |
-| **Catalogue d’ouvertures** | Explorer des lignes théoriques (`/catalog`) |
-| **Thèmes & langue** | FR/EN, thèmes Atelier / Encre / Marbre / Arène, polices, profondeur moteur |
+| **Chess.com library** | Pull your recent games so you can review them outside the site |
+| **Fullscreen review** (`/analyze/[gameId]`) | Analyze without noisy page scroll — board + side panel focus |
+| **Stockfish (WASM)** | Live evaluation + move classification in the browser |
+| **Quality markers (PNG)** | Brilliant → Blunder badges on the played square |
+| **Coach** | Plain-language feedback: what the move does, why it’s wrong / strong, what to play |
+| **Player perspective** | Your pieces at the bottom; coach reviews *your* moves, not the opponent’s |
+| **Fork / variation** | Test another move without wiping the game; **Back to fork** button |
+| **Openings catalog** | Explore theory lines (`/catalog`) |
+| **Themes & language** | EN/FR, Atelier / Ink / Marble / Arena themes, fonts, engine depth |
 
 ---
 
-## Démarrage rapide
+## Quick start
 
-### Prérequis
+### Requirements
 
-- Node.js 20+ recommandé  
-- npm (ou pnpm / yarn / bun)
+- Node.js 20+ recommended  
+- npm (or pnpm / yarn / bun)
 
-### Installation
+### Install
 
 ```bash
-git clone <url-du-repo>
+git clone <repo-url>
 cd chess_ka
 npm install
 npm run dev
 ```
 
-Ouvre [http://localhost:3000](http://localhost:3000).
+Open [http://localhost:3000](http://localhost:3000).
 
 ### Scripts
 
-| Commande | Rôle |
+| Command | Purpose |
 |---|---|
-| `npm run dev` | Serveur de développement |
-| `npm run build` | Build production |
-| `npm start` | Lancer le build |
+| `npm run dev` | Development server |
+| `npm run build` | Production build |
+| `npm start` | Run the production build |
 | `npm run lint` | ESLint |
 
 ### Stockfish
 
-Le moteur tourne **côté client** (Web Worker + WASM). Les fichiers moteur sont servis depuis `public/engines/`. Aucune clé API Stockfish n’est requise.
+The engine runs **on the client** (Web Worker + WASM). Engine files are served from `public/engines/`. No Stockfish API key is required.
 
 ---
 
-## Parcours utilisateur typique
+## Typical user flow
 
-1. **Accueil** — entre ton pseudo Chess.com → la bibliothèque se remplit.  
-2. **Clique une partie** → ouverture de `/analyze/...`.  
-3. **Parcours coup par coup** — symboles sur l’échiquier, onglets *Coups / Coach / Stockfish*.  
-4. **Sur une erreur** — le coach explique (pièce en prise, prise ratée, etc.) + flèche rouge du meilleur coup.  
-5. **Tu veux tester autre chose** — joue un autre coup → **variante** dans l’arborescence.  
-6. **Retour au fork** — un clic pour revenir au dernier coup *réel* de la partie.
+1. **Home** — enter your Chess.com username → the library fills in.  
+2. **Click a game** → opens `/analyze/...`.  
+3. **Step through moves** — board markers, tabs *Moves / Coach / Stockfish*.  
+4. **On a mistake** — the coach explains (hanging piece, missed capture, etc.) + red arrow for the best move.  
+5. **Want to try something else?** — play a different move → a **variation** appears in the move tree.  
+6. **Back to fork** — one click returns to the last *real* game ply where you branched.
 
 ---
 
-## Architecture (pourquoi c’est organisé comme ça)
+## Architecture (why it’s structured this way)
 
-Le code est découpé par **domaines** sous `features/`, pas seulement par pages.  
-Objectif : garder l’échiquier, l’analyse et les réglages indépendants et réutilisables.
+Code is split by **domain** under `features/`, not only by pages.  
+Goal: keep the board, analysis, and settings independent and reusable.
 
 ```
 chess_ka/
-├── app/                      # Routes Next.js (App Router)
-│   ├── page.tsx              # Studio d’accueil (bibliothèque + free-play)
-│   ├── analyze/[gameId]/     # Revue de partie
-│   ├── catalog/              # Ouvertures
-│   ├── settings/             # Préférences
-│   └── api/chess-com/        # Proxy / fetch parties Chess.com
+├── app/                      # Next.js routes (App Router)
+│   ├── page.tsx              # Home studio (library + free-play)
+│   ├── analyze/[gameId]/     # Game review
+│   ├── catalog/              # Openings
+│   ├── settings/             # Preferences
+│   └── api/chess-com/        # Chess.com games proxy / fetch
 ├── features/
-│   ├── analysis/             # Stockfish, classification, coach, revue
-│   ├── chessboard/           # Plateau interactif + marqueurs
-│   ├── openings/             # Livre d’ouvertures + catalogue
-│   ├── settings/             # Thème, i18n, cookies
+│   ├── analysis/             # Stockfish, classification, coach, review
+│   ├── chessboard/           # Interactive board + markers
+│   ├── openings/             # Opening book + catalog
+│   ├── settings/             # Theme, i18n, cookies
 │   └── components/layout/    # Nav, shell
 ├── public/
 │   ├── engines/              # Stockfish WASM / JS
-│   └── markers/              # Badges PNG de qualité
+│   └── markers/              # Quality badge PNGs
 └── README.md
 ```
 
-### Idées clés
+### Key modules
 
-| Module | Pourquoi |
+| Module | Why |
 |---|---|
-| `useChessGame` | Une seule source de vérité FEN / historique / **fork** (ligne principale + variante) |
-| `useStockfish` | Éval live sans bloquer l’UI |
-| `useMoveClassification` | Worker dédié pour comparer « avant / après » le coup sans couper le panneau moteur |
-| `perspective.ts` | Savoir si le pseudo analysé était Blancs ou Noirs |
-| `moveDiagnosis.ts` | Motifs tactiques humains (en prise, prise ratée, échec manqué…) pour le coach |
-| `MoveCoachPanel` | UI du feedback (badge, pourquoi, coup à jouer) |
-| Settings + cookies | Persister thème / langue / profondeur sans backend utilisateur |
+| `useChessGame` | Single source of truth for FEN / history / **fork** (main line + variation) |
+| `useStockfish` | Live eval without freezing the UI |
+| `useMoveClassification` | Dedicated worker to compare before/after a move without interrupting the engine panel |
+| `perspective.ts` | Know whether the analyzing username played White or Black |
+| `moveDiagnosis.ts` | Human tactical motifs (hanging pieces, missed captures, missed checks…) for the coach |
+| `MoveCoachPanel` | Feedback UI (badge, why, move to play) |
+| Settings + cookies | Persist theme / language / depth without a user backend |
 
 ---
 
-## Analyse des coups — comment ça marche
+## Move analysis — how it works
 
 ### Classification
 
-Pour chaque demi-coup, on compare :
+For each ply we compare:
 
-1. l’évaluation **avant** le coup (meilleure ligne Stockfish) ;
-2. l’évaluation **après** le coup joué.
+1. the eval **before** the move (Stockfish best line);  
+2. the eval **after** the played move.
 
-Selon la perte en centipions (et des heuristiques type sacrifice), le coup reçoit une qualité :
+Based on centipawn loss (plus heuristics such as sound sacrifices), the move gets a quality label:
 
-**Positif :** Brillant → Superbe → Meilleur → Excellent → Bon  
-**Négatif :** Imprécision → Erreur → Occasion manquée → Gaffe  
+**Positive:** Brilliant → Great → Best → Excellent → Good  
+**Negative:** Inaccuracy → Mistake → Miss → Blunder  
 
-Les badges sont des **PNG** dans `public/markers/` (remplaçables — voir `public/markers/README.md`).
+Badges are **PNG** files in `public/markers/` (replaceable — see `public/markers/README.md`).
 
 ### Coach
 
-Le coach ne se contente pas du label :
+The coach goes beyond the label:
 
-- **faits** du coup (prise, échec, roque…) ;
-- **pourquoi c’est faux** (matériel en prise, meilleure prise ratée, perte d’éval…) ;
-- **pourquoi c’est fort** sur les bons coups ;
-- **coup à jouer** + flèche de correction sur l’échiquier.
+- **facts** about the move (capture, check, castling…);  
+- **why it’s wrong** (hanging material, missed capture, eval drop…);  
+- **why it’s strong** on good moves;  
+- **move to play** + correction arrow on the board.
 
-En revue Chess.com, le coach s’applique aux **coups du joueur analysé**. Sur un coup adverse, l’UI reste informative mais sans coaching « tu aurais dû… ».
+In Chess.com review, coaching applies to the **analyzing player’s moves**. On an opponent ply, the UI stays informative but does not say “you should have…”.
 
 ### Perspective & orientation
 
-Si tu as joué les **Noirs**, l’échiquier s’ouvre avec les Noirs en bas.  
-Ça évite de rejouer mentalement à l’envers — c’est la même vue que pendant la partie.
+If you played **Black**, the board opens with Black at the bottom.  
+That matches how you saw the game while playing — no mental flip required.
 
 ---
 
-## Forks / variantes — pourquoi
+## Forks / variations — why
 
-Sans système de variante, jouer un autre coup **écrasait** le reste de la PGN.  
-On perdait la partie réelle.
+Without variation support, playing another move **truncated** the rest of the PGN and wiped the real game.
 
-Désormais :
+Now:
 
-- la **ligne principale** (`mainLine`) reste intacte ;
-- un coup différent crée une **variante** affichée dans la liste des coups ;
-- le bouton **Retour au fork** ramène au dernier coup réel avant la bifurcation.
+- the **main line** (`mainLine`) stays intact;  
+- a different move starts a **variation** shown in the move list;  
+- **Back to fork** returns to the last real ply before the branch.
 
-C’est le workflow classique d’entraînement : *« et si j’avais joué ça à la place ? »*.
+Classic training loop: *“what if I had played this instead?”*
 
 ---
 
-## Thèmes UI
+## UI themes
 
-| Thème | Intention |
+| Theme | Intent |
 |---|---|
-| **Atelier** (défaut) | Studio clair sauge / vert échiquier — lisible longtemps |
-| **Encre** | Desk d’analyse sombre |
-| **Marbre** | Pierre froide + teal |
-| **Arène** | Ambiance salle de tournoi, accent laiton |
+| **Atelier** (default) | Light sage studio / board green — comfortable for long sessions |
+| **Ink** | Dark analysis desk |
+| **Marble** | Cool stone + teal |
+| **Arena** | Tournament-hall mood, brass accent |
 
-Police par défaut : **Outfit + Syne** (pair « studio »).  
-Les réglages sont stockés en cookie (`cpa-settings-v3`).
+Default font pair: **Outfit + Syne** (“studio”).  
+Settings are stored in a cookie (`cpa-settings-v3`).
 
 ---
 
-## Stack technique
+## Tech stack
 
-| Techno | Rôle |
+| Tech | Role |
 |---|---|
 | [Next.js](https://nextjs.org) 16 (App Router) | App + API routes |
 | React 19 | UI |
-| TypeScript | Typage |
-| Tailwind CSS 4 | Styles |
-| [chess.js](https://github.com/jhlywa/chess.js) | Règles, PGN, SAN |
-| [react-chessboard](https://github.com/Clariity/react-chessboard) | Plateau |
-| [stockfish](https://github.com/nmrugg/stockfish.js) (WASM) | Moteur |
-| lucide-react | Icônes |
+| TypeScript | Types |
+| Tailwind CSS 4 | Styling |
+| [chess.js](https://github.com/jhlywa/chess.js) | Rules, PGN, SAN |
+| [react-chessboard](https://github.com/Clariity/react-chessboard) | Board |
+| [stockfish](https://github.com/nmrugg/stockfish.js) (WASM) | Engine |
+| lucide-react | Icons |
 
-> **Note agents / IA :** ce repo utilise une version Next.js qui peut différer des tutoriels classiques. Voir `AGENTS.md` et la doc dans `node_modules/next/dist/docs/` avant de changer des APIs Next.
-
----
-
-## API Chess.com
-
-Route interne : `GET /api/chess-com/games?username=...`
-
-Pourquoi un proxy ?
-
-- éviter les soucis CORS / rate-limit côté navigateur ;
-- normaliser la réponse pour la bibliothèque locale ;
-- garder la logique d’import au même endroit.
-
-Les parties actives / la bibliothèque sont aussi mémorisées en **session navigateur** (`gameSession`) pour rouvrir une revue rapidement.
+> **Note for agents / AI:** this repo may use Next.js APIs that differ from older tutorials. See `AGENTS.md` and docs under `node_modules/next/dist/docs/` before changing Next APIs.
 
 ---
 
-## Internationalisation
+## Chess.com API
 
-FR et EN via `features/settings/lib/i18n.ts`.  
-La langue se change dans la navbar ou les paramètres.
+Internal route: `GET /api/chess-com/games?username=...`
 
----
+Why a proxy?
 
-## Roadmap possible (non bloquant)
+- avoid CORS / browser rate-limit friction;  
+- normalize the payload for the local library;  
+- keep import logic in one place.
 
-Idées naturelles si le projet continue :
-
-- plusieurs variantes sœurs (arbre complet type PGN `(...)`) ;
-- export PGN de la variante explorée ;
-- stats de précision par partie / ouverture ;
-- import PGN fichier (bouton déjà prévu côté UI) ;
-- plus de motifs coach (clous, fourchettes détectées explicitement).
+Active games / library state are also stored in **browser session** (`gameSession`) so you can reopen a review quickly.
 
 ---
 
-## Contribuer
+## Internationalization
+
+English and French via `features/settings/lib/i18n.ts`.  
+Language can be switched from the navbar or settings.
+
+---
+
+## Possible roadmap (non-blocking)
+
+Natural next steps if the project grows:
+
+- multiple sibling variations (full PGN-style `(...)` tree);  
+- export PGN of the explored line;  
+- accuracy stats per game / opening;  
+- PGN file import (UI hook already sketched);  
+- richer coach motifs (pins, forks called out explicitly).
+
+---
+
+## Contributing
 
 1. Fork / clone  
 2. `npm install && npm run dev`  
-3. Branche courte, PR claire  
+3. Short branch, clear PR  
 
-Pour les badges plateau : remplace les PNG dans `public/markers/` en gardant les noms de fichiers.
-
----
-
-## Licence & support
-
-Projet personnel / éducatif.  
-Le lien GitHub du dépôt est configurable via `NEXT_PUBLIC_GITHUB_URL` (voir `features/settings/lib/settingsTypes.ts`).
+For board badges: replace PNGs in `public/markers/` while keeping the same filenames.
 
 ---
 
-## En une phrase
+## License & support
 
-> **Chess Pro Analyzer** existe pour transformer une partie Chess.com en session d’entraînement : voir la qualité des coups, comprendre le *pourquoi*, explorer des alternatives, et rester dans ta perspective de joueur.
+Personal / educational project.  
+The GitHub link is configurable via `NEXT_PUBLIC_GITHUB_URL` (see `features/settings/lib/settingsTypes.ts`).
+
+---
+
+## In one sentence
+
+> **Chess Pro Analyzer** turns a Chess.com game into a training session: see move quality, understand the *why*, explore alternatives, and stay in your seat as the player.
