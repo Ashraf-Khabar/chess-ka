@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
-import { DM_Sans } from "next/font/google";
-import Navbar from "@/features/components/layout/Navbar";
+import { Inter } from "next/font/google";
+import AppShell from "@/features/components/layout/AppShell";
 import MainShell from "@/features/components/layout/MainShell";
 import AppProviders from "@/features/settings/components/AppProviders";
 import "./globals.css";
 
-const dmSans = DM_Sans({
+const inter = Inter({
   subsets: ["latin"],
-  variable: "--font-dm-sans",
+  variable: "--font-inter",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -23,17 +24,19 @@ export default function RootLayout({
   return (
     <html
       lang="fr"
-      data-app-theme="signal"
+      data-app-theme="carbon"
       data-font="desk"
-      data-color-scheme="light"
+      data-color-scheme="dark"
+      className="dark"
       suppressHydrationWarning
     >
       <body
-        className={`${dmSans.variable} font-sans min-h-dvh flex flex-col antialiased`}
+        className={`${inter.variable} font-sans min-h-dvh antialiased`}
       >
         <AppProviders>
-          <Navbar />
-          <MainShell>{children}</MainShell>
+          <AppShell>
+            <MainShell>{children}</MainShell>
+          </AppShell>
         </AppProviders>
       </body>
     </html>

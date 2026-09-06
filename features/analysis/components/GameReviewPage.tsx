@@ -113,7 +113,7 @@ export default function GameReviewPage({ gameId }: GameReviewPageProps) {
       depth: evaluation.depth,
     },
     {
-      depth: Math.max(10, settings.engineDepth - 2),
+      depth: settings.engineDepth,
       workerPath,
     }
   );

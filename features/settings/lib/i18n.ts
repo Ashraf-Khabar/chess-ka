@@ -2,11 +2,14 @@ import type { AppLanguage } from "@/features/settings/lib/settingsTypes";
 
 const fr = {
   "nav.analysis": "Analyse",
+  "nav.board": "Échiquier",
   "nav.openings": "Ouvertures",
+  "nav.catalog": "Catalogue",
   "nav.library": "Bibliothèque",
   "nav.settings": "Paramètres",
+  "nav.profile": "Profil",
   "nav.support": "Support GitHub",
-  "nav.menu": "Ouvrir le menu",
+  "nav.menu": "Navigation",
 
   "studio.title": "Échiquier annoté",
   "studio.eyebrow": "Studio d’analyse",
@@ -159,6 +162,8 @@ const fr = {
   "settings.appTheme.dusk.desc":
     "Sombre chaud avec corail.",
   "settings.engineDepth": "Profondeur Stockfish",
+  "settings.engineDepth.hint":
+    "Plus élevé = plus précis (et plus lent). 18–22 proche d’une analyse Chess.com.",
   "settings.showCoach": "Afficher le panneau Coach",
   "settings.previewHint":
     "Les changements s’appliquent tout de suite et sont sauvegardés dans les cookies.",
@@ -191,11 +196,14 @@ type DictKey = keyof typeof fr;
 
 const en: Record<DictKey, string> = {
   "nav.analysis": "Analysis",
+  "nav.board": "Board",
   "nav.openings": "Openings",
+  "nav.catalog": "Catalog",
   "nav.library": "Library",
   "nav.settings": "Settings",
+  "nav.profile": "Profile",
   "nav.support": "GitHub support",
-  "nav.menu": "Open menu",
+  "nav.menu": "Navigation",
 
   "studio.title": "Annotated board",
   "studio.eyebrow": "Analysis studio",
@@ -348,6 +356,8 @@ const en: Record<DictKey, string> = {
   "settings.appTheme.dusk.desc":
     "Warm dark with coral.",
   "settings.engineDepth": "Stockfish depth",
+  "settings.engineDepth.hint":
+    "Higher = more accurate (and slower). 18–22 is close to Chess.com-style analysis.",
   "settings.showCoach": "Show Coach panel",
   "settings.previewHint":
     "Changes apply immediately and are saved in cookies.",

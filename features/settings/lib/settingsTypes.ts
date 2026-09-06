@@ -39,9 +39,9 @@ export const DEFAULT_SETTINGS: AppSettings = {
   boardSize: "lg",
   boardTheme: "classic",
   pieceStyle: "classic",
-  appTheme: "signal",
+  appTheme: "carbon",
   animationSpeed: "normal",
-  engineDepth: 14,
+  engineDepth: 18,
   showLiveBestArrow: true,
   showNotation: true,
   showMoveMarkers: true,
@@ -67,7 +67,7 @@ export const BOARD_SIZE_MAX: Record<BoardSize, string> = {
   xl: "min(100%, min(86vh, 860px))",
 };
 
-export const ENGINE_DEPTH_OPTIONS = [10, 12, 14, 16, 18] as const;
+export const ENGINE_DEPTH_OPTIONS = [14, 16, 18, 20, 22] as const;
 
 export const GITHUB_REPO_URL =
   process.env.NEXT_PUBLIC_GITHUB_URL ??

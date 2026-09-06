@@ -1,8 +1,229 @@
 @import "tailwindcss";
 
 /*
- * Chess Pro — Match Desk design system
- * Default is light (signal). Avoids purple / cream-terracotta / broadsheet clichés.
+ * Chess Pro — Premium SaaS shell (Linear / Vercel inspired)
+ * Default chrome: dark. Theme tokens follow below.
+ */
+
+:root {
+  --shell-sidebar-w: 15.5rem;
+  --shell-tabbar-h: 4.25rem;
+  --shell-glass: color-mix(in srgb, var(--surface-elevated) 72%, transparent);
+  --shell-glass-border: color-mix(in srgb, var(--line) 80%, transparent);
+  --eval-brilliant: #34d399;
+  --eval-best: #4ade80;
+  --eval-good: #a3e635;
+  --eval-inaccuracy: #fbbf24;
+  --eval-mistake: #fb923c;
+  --eval-blunder: #fb7185;
+}
+
+.app-shell {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--background);
+  color: var(--foreground);
+}
+
+.app-shell-stage {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: calc(var(--shell-tabbar-h) + env(safe-area-inset-bottom, 0px));
+}
+
+.app-shell--analyze .app-shell-stage {
+  padding-bottom: 0;
+}
+
+@media (min-width: 768px) {
+  .app-shell {
+    flex-direction: row;
+  }
+
+  .app-shell-stage {
+    padding-bottom: 0;
+    padding-left: var(--shell-sidebar-w);
+  }
+}
+
+.app-sidebar {
+  position: fixed;
+  inset: 0 auto 0 0;
+  z-index: 40;
+  width: var(--shell-sidebar-w);
+  flex-direction: column;
+  border-right: 1px solid var(--shell-glass-border);
+  background: var(--shell-glass);
+  backdrop-filter: blur(20px) saturate(1.2);
+  -webkit-backdrop-filter: blur(20px) saturate(1.2);
+}
+
+.app-sidebar-inner {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 1.1rem 0.85rem 1rem;
+  gap: 1.25rem;
+}
+
+.app-sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.35rem 0.45rem;
+  border-radius: 0.75rem;
+  transition: background 160ms ease;
+}
+
+.app-sidebar-brand:hover {
+  background: color-mix(in srgb, var(--surface-soft) 70%, transparent);
+}
+
+.app-sidebar-mark {
+  display: grid;
+  place-items: center;
+  width: 2.15rem;
+  height: 2.15rem;
+  border-radius: 0.55rem;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: var(--on-accent);
+  background: linear-gradient(
+    145deg,
+    var(--accent),
+    color-mix(in srgb, var(--accent) 70%, #000)
+  );
+  box-shadow: 0 8px 20px color-mix(in srgb, var(--accent) 28%, transparent);
+}
+
+.app-sidebar-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+}
+
+.app-sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  flex: 1 1 auto;
+}
+
+.app-sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  min-height: 2.75rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: 0.7rem;
+  font-size: 0.9rem;
+  font-weight: 550;
+  color: var(--ink-muted);
+  transition:
+    background 160ms ease,
+    color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.app-sidebar-link:hover {
+  color: var(--ink);
+  background: color-mix(in srgb, var(--surface-soft) 80%, transparent);
+}
+
+.app-sidebar-link[data-active="true"] {
+  color: var(--accent);
+  background: var(--accent-soft);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 28%, transparent);
+}
+
+.app-sidebar-link--ghost {
+  color: var(--ink-muted);
+  font-weight: 500;
+}
+
+.app-sidebar-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--line);
+}
+
+.app-tabbar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 45;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  border-top: 1px solid var(--shell-glass-border);
+  background: var(--shell-glass);
+  backdrop-filter: blur(22px) saturate(1.25);
+  -webkit-backdrop-filter: blur(22px) saturate(1.25);
+  box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.28);
+}
+
+.app-tabbar-inner {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  height: var(--shell-tabbar-h);
+  max-width: 32rem;
+  margin: 0 auto;
+  padding: 0 0.35rem;
+}
+
+.app-tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+  min-height: 44px;
+  min-width: 44px;
+  border-radius: 0.85rem;
+  color: var(--ink-muted);
+  transition:
+    color 150ms ease,
+    background 150ms ease,
+    transform 120ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.app-tab:active {
+  transform: scale(0.96);
+}
+
+.app-tab[data-active="true"] {
+  color: var(--accent);
+}
+
+.app-tab-icon {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.55rem;
+  transition: background 150ms ease;
+}
+
+.app-tab[data-active="true"] .app-tab-icon {
+  background: var(--accent-soft);
+}
+
+.app-tab-label {
+  font-size: 0.65rem;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+}
+
+/*
+ * Theme tokens — default dark via data-app-theme="carbon" on <html>.
  */
 
 :root,
@@ -183,8 +404,8 @@
 }
 
 [data-font="desk"] {
-  --font-sans: var(--font-dm-sans), ui-sans-serif, system-ui, sans-serif;
-  --font-display: var(--font-dm-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
 }
 
 @theme inline {
@@ -428,15 +649,15 @@ nav {
   background: var(--accent-soft);
 }
 
-/* Full-viewport analyze shell (no page scroll) */
+/* Full-viewport analyze shell (no page scroll) — fills AppShell stage */
 .analyze-main {
   flex: 1 1 auto;
   min-height: 0;
   width: 100%;
   max-width: none;
-  height: calc(100dvh - 4rem);
+  height: 100dvh;
   overflow: hidden;
-  padding: 0.55rem;
+  padding: 0;
 }
 
 .review-shell {

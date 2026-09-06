@@ -68,7 +68,7 @@ export default function DashboardAnalysis() {
       isThinking: evaluation.isThinking,
       depth: evaluation.depth,
     },
-    { depth: Math.max(10, settings.engineDepth - 2), workerPath }
+    { depth: settings.engineDepth, workerPath }
   );
 
   const sideToMove = useMemo<"w" | "b">(

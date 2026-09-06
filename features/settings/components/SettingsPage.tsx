@@ -282,6 +282,9 @@ export default function SettingsPage() {
         </h2>
 
         <SettingBlock icon={<Gauge size={16} />} title={t("settings.engineDepth")}>
+          <p className="mb-2 text-xs text-[var(--ink-muted)]">
+            {t("settings.engineDepth.hint")}
+          </p>
           <Segmented
             value={String(settings.engineDepth)}
             options={ENGINE_DEPTH_OPTIONS.map((depth) => ({

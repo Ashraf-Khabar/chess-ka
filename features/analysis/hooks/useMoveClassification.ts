@@ -10,6 +10,7 @@ import {
   toColorPovCp,
   type MoveQuality,
 } from "@/features/analysis/lib/classifyMove";
+import { configureStockfishWorker } from "@/features/analysis/lib/stockfishConfig";
 
 export interface MoveClassification {
   quality: MoveQuality | null;
@@ -69,7 +70,7 @@ export function useMoveClassification(
   options: UseMoveClassificationOptions = {}
 ): MoveClassification {
   const {
-    depth = 12,
+    depth = 18,
     workerPath = "/engines/stockfish-nnue-16-single.js",
     enabled = true,
   } = options;
@@ -108,8 +109,7 @@ export function useMoveClassification(
     }
 
     workerRef.current = worker;
-    worker.postMessage("uci");
-    worker.postMessage("isready");
+    configureStockfishWorker(worker);
 
     return () => {
       worker.terminate();
@@ -277,7 +277,8 @@ export function useMoveClassification(
     if (!enabled) return;
     if (lockedPlyRef.current === plyIndex) return;
 
-    const settleDepth = Math.min(depth, 10);
+    // Wait until the live after-eval has reached the target search depth.
+    const settleDepth = depth;
     const afterScoreMissing =
       afterEval.cp === null && afterEval.mate === null;
     const afterStillSearching =

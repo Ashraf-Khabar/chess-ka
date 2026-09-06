@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { configureStockfishWorker } from "@/features/analysis/lib/stockfishConfig";
 
 export interface StockfishEvaluation {
   cp: number | null;
@@ -41,8 +42,8 @@ export function useStockfish(
   options: UseStockfishOptions = {}
 ): StockfishEvaluation {
   const {
-    depth = 15,
-    workerPath = "/engines/stockfish.js",
+    depth = 18,
+    workerPath = "/engines/stockfish-nnue-16-single.js",
     uiThrottleMs = 140,
   } = options;
 
@@ -148,8 +149,7 @@ export function useStockfish(
     };
 
     worker.addEventListener("message", onMessage);
-    worker.postMessage("uci");
-    worker.postMessage("isready");
+    configureStockfishWorker(worker);
 
     const ready = { ...latestRef.current, isReady: true, error: null };
     latestRef.current = ready;

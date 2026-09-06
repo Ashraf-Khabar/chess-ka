@@ -73,18 +73,18 @@ export function toColorPovCp(
 
 /**
  * Centipawn thresholds (mover POV loss vs the pre-move evaluation).
- * Tuned to feel close to popular online analyzers without copying them exactly.
+ * Stricter bands — closer to Chess.com-style harshness on CP proxies.
  */
 export function classifyCentipawnLoss(
   lossCp: number
 ): Exclude<MoveQuality, "brilliant" | "great" | "miss"> {
   const loss = Math.max(0, lossCp);
 
-  if (loss <= 10) return "best";
-  if (loss <= 30) return "excellent";
-  if (loss <= 60) return "good";
-  if (loss <= 120) return "inaccuracy";
-  if (loss <= 250) return "mistake";
+  if (loss <= 5) return "best";
+  if (loss <= 20) return "excellent";
+  if (loss <= 50) return "good";
+  if (loss <= 100) return "inaccuracy";
+  if (loss <= 200) return "mistake";
   return "blunder";
 }
 
@@ -143,10 +143,10 @@ export function classifyMove(input: ClassifyMoveInput): MoveQuality {
   const gainCp = input.evalAfterMoverCp - input.evalBeforeMoverCp;
   const base = classifyCentipawnLoss(lossCp);
 
-  const nearBest = input.isEngineBest || lossCp <= 20;
+  const nearBest = input.isEngineBest || lossCp <= 12;
   const stillStrong =
     input.evalAfterMoverCp >= 150 ||
-    input.evalAfterMoverCp >= input.evalBeforeMoverCp - 40;
+    input.evalAfterMoverCp >= input.evalBeforeMoverCp - 30;
 
   // Brilliant: sound sacrifice that stays near the engine best line
   if (input.isSacrifice && nearBest && stillStrong) {
@@ -154,30 +154,30 @@ export function classifyMove(input: ClassifyMoveInput): MoveQuality {
   }
 
   // Great: engine best (or tiny loss) that swings the eval hard in your favor
-  const bigSwing = gainCp >= 80;
+  const bigSwing = gainCp >= 100;
   const clutchBest =
     input.isEngineBest &&
-    lossCp <= 8 &&
+    lossCp <= 5 &&
     input.evalAfterMoverCp >= 120 &&
-    gainCp >= 40;
+    gainCp >= 50;
 
   if (nearBest && (bigSwing || clutchBest)) {
     return "great";
   }
 
   // Exact engine choice with tiny loss stays "best"
-  if (input.isEngineBest && lossCp <= 15) {
+  if (input.isEngineBest && lossCp <= 8) {
     return "best";
   }
 
   // Miss: you had a winning (or crushing) chance and let it slip
   const hadWinningChance =
-    input.evalBeforeMoverCp >= 200 || input.evalBeforeMoverCp >= 10_000;
+    input.evalBeforeMoverCp >= 180 || input.evalBeforeMoverCp >= 10_000;
   const threwWin =
     !input.isEngineBest &&
-    lossCp >= 150 &&
+    lossCp >= 120 &&
     hadWinningChance &&
-    input.evalAfterMoverCp < input.evalBeforeMoverCp - 120;
+    input.evalAfterMoverCp < input.evalBeforeMoverCp - 100;
 
   if (threwWin && (base === "mistake" || base === "blunder")) {
     return "miss";
