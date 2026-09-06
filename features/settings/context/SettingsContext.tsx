@@ -40,6 +40,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const raw =
       getCookie(SETTINGS_COOKIE) ??
+      getCookie("cpa-settings-v4") ??
       getCookie("cpa-settings-v3") ??
       getCookie("cpa-settings-v2");
     const fromCookie = parseSettings(raw);

@@ -94,19 +94,97 @@
   --radius-control: 0.5rem;
 }
 
+[data-app-theme="emerald"] {
+  --ink: #10241a;
+  --ink-muted: #5a7264;
+  --accent: #0f8a5a;
+  --accent-soft: rgba(15, 138, 90, 0.12);
+  --on-accent: #f3fbf7;
+  --forest: #0f8a5a;
+  --forest-soft: rgba(15, 138, 90, 0.12);
+  --cream: #d9e6de;
+  --surface: #f1f7f3;
+  --surface-soft: #e4eee8;
+  --surface-elevated: #ffffff;
+  --line: #c3d4ca;
+  --gold: #9a7b2f;
+  --background: #d5e2da;
+  --foreground: var(--ink);
+  --shadow: 0 12px 32px rgba(16, 36, 26, 0.08);
+  --panel-glow: color-mix(in srgb, var(--accent) 8%, transparent);
+  --radius-panel: 0.85rem;
+  --radius-control: 0.5rem;
+}
+
+[data-app-theme="slate"] {
+  --ink: #15191f;
+  --ink-muted: #66707c;
+  --accent: #e67e22;
+  --accent-soft: rgba(230, 126, 34, 0.12);
+  --on-accent: #1a0f05;
+  --forest: #e67e22;
+  --forest-soft: rgba(230, 126, 34, 0.12);
+  --cream: #dde1e6;
+  --surface: #f2f4f6;
+  --surface-soft: #e7eaee;
+  --surface-elevated: #ffffff;
+  --line: #c9ced5;
+  --gold: #9a7b2f;
+  --background: #d8dce2;
+  --foreground: var(--ink);
+  --shadow: 0 12px 32px rgba(21, 25, 31, 0.08);
+  --panel-glow: color-mix(in srgb, var(--accent) 8%, transparent);
+  --radius-panel: 0.85rem;
+  --radius-control: 0.5rem;
+}
+
+[data-app-theme="dusk"] {
+  --ink: #f0e9e4;
+  --ink-muted: #a8988e;
+  --accent: #ff7a59;
+  --accent-soft: rgba(255, 122, 89, 0.14);
+  --on-accent: #1a0c08;
+  --forest: #ff7a59;
+  --forest-soft: rgba(255, 122, 89, 0.14);
+  --cream: #120e0c;
+  --surface: #1a1513;
+  --surface-soft: #221c19;
+  --surface-elevated: #2a231f;
+  --line: #3a312c;
+  --gold: #d4b45a;
+  --background: #0e0b0a;
+  --foreground: var(--ink);
+  --shadow: 0 16px 40px rgba(0, 0, 0, 0.48);
+  --panel-glow: color-mix(in srgb, var(--accent) 9%, transparent);
+  --radius-panel: 0.85rem;
+  --radius-control: 0.5rem;
+}
+
+[data-app-theme="paper"] {
+  --ink: #1c2430;
+  --ink-muted: #667588;
+  --accent: #2563eb;
+  --accent-soft: rgba(37, 99, 235, 0.1);
+  --on-accent: #f8fbff;
+  --forest: #2563eb;
+  --forest-soft: rgba(37, 99, 235, 0.1);
+  --cream: #dce3ec;
+  --surface: #f5f7fa;
+  --surface-soft: #e9eef4;
+  --surface-elevated: #ffffff;
+  --line: #c7d0db;
+  --gold: #9a7b2f;
+  --background: #dbe2ea;
+  --foreground: var(--ink);
+  --shadow: 0 12px 32px rgba(28, 36, 48, 0.08);
+  --panel-glow: color-mix(in srgb, var(--accent) 8%, transparent);
+  --radius-panel: 0.85rem;
+  --radius-control: 0.5rem;
+}
+
 [data-font="desk"] {
   --font-sans: var(--font-dm-sans), ui-sans-serif, system-ui, sans-serif;
-  --font-display: var(--font-bricolage), ui-sans-serif, system-ui, sans-serif;
-}
-
-[data-font="manrope"] {
-  --font-sans: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
-  --font-display: var(--font-fraunces), ui-serif, Georgia, serif;
-}
-
-[data-font="grotesk"] {
-  --font-sans: var(--font-grotesk), ui-sans-serif, system-ui, sans-serif;
-  --font-display: var(--font-literata), ui-serif, Georgia, serif;
+  --font-display: var(--font-dm-sans), ui-sans-serif, system-ui, sans-serif;
 }
 
 @theme inline {
@@ -1251,14 +1329,16 @@ nav {
 .variation-return-btn {
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
-  border-radius: 0.65rem;
+  gap: 0.35rem;
+  border-radius: 0.5rem;
   border: 1px solid var(--accent);
   background: var(--accent-soft);
   color: var(--accent);
-  padding: 0.45rem 0.85rem;
-  font-size: 0.78rem;
+  padding: 0.35rem 0.7rem;
+  font-size: 0.72rem;
   font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
   transition: background 150ms ease, color 150ms ease;
 }
 

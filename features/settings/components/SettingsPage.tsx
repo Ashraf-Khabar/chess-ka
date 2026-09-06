@@ -8,9 +8,9 @@ import {
   Square,
   ArrowRightLeft,
   Palette,
-  Type,
   Gauge,
   LayoutGrid,
+  Crown,
 } from "lucide-react";
 import { useSettings } from "@/features/settings/context/SettingsContext";
 import {
@@ -21,9 +21,27 @@ import {
   type AppTheme,
   type BoardSize,
   type BoardTheme,
-  type FontPair,
+  type PieceStyle,
 } from "@/features/settings/lib/settingsTypes";
+import { BOARD_THEME_OPTIONS } from "@/features/chessboard/lib/boardThemes";
+import { PIECE_STYLE_OPTIONS } from "@/features/chessboard/lib/pieceSets";
 import GitHubIcon from "@/features/components/icons/GitHubIcon";
+import type { TranslationKey } from "@/features/settings/lib/i18n";
+
+const APP_THEME_CARDS: {
+  value: AppTheme;
+  swatch: string;
+  mode: "light" | "dark";
+}[] = [
+  { value: "signal", swatch: "#c62828", mode: "light" },
+  { value: "paper", swatch: "#2563eb", mode: "light" },
+  { value: "emerald", swatch: "#0f8a5a", mode: "light" },
+  { value: "slate", swatch: "#e67e22", mode: "light" },
+  { value: "harbor", swatch: "#0e7490", mode: "light" },
+  { value: "carbon", swatch: "#ef5350", mode: "dark" },
+  { value: "night", swatch: "#34d399", mode: "dark" },
+  { value: "dusk", swatch: "#ff7a59", mode: "dark" },
+];
 
 export default function SettingsPage() {
   const { settings, updateSettings, resetSettings, t, hydrated } = useSettings();
@@ -37,7 +55,7 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="mx-auto flex max-w-4xl flex-col gap-5 fade-rise">
+    <div className="relative z-10 mx-auto flex max-w-4xl flex-col gap-5 fade-rise">
       <header className="panel-shell">
         <p className="eyebrow">{t("settings.eyebrow")}</p>
         <h1 className="font-display text-3xl text-[var(--ink)]">
@@ -64,33 +82,55 @@ export default function SettingsPage() {
           />
         </SettingBlock>
 
-        <SettingBlock icon={<Type size={16} />} title={t("settings.font")}>
-          <Segmented
-            value={settings.fontPair}
-            options={[
-              { value: "desk", label: t("settings.font.desk") },
-              { value: "manrope", label: t("settings.font.manrope") },
-              { value: "grotesk", label: t("settings.font.grotesk") },
-            ]}
-            onChange={(fontPair) =>
-              updateSettings({ fontPair: fontPair as FontPair })
-            }
-          />
-        </SettingBlock>
-
         <SettingBlock icon={<Palette size={16} />} title={t("settings.appTheme")}>
-          <ThemeSwatches
-            value={settings.appTheme}
-            onChange={(appTheme) =>
-              updateSettings({ appTheme: appTheme as AppTheme })
-            }
-            options={[
-              { value: "signal", label: t("settings.appTheme.signal"), swatch: "#c62828" },
-              { value: "carbon", label: t("settings.appTheme.carbon"), swatch: "#ef5350" },
-              { value: "harbor", label: t("settings.appTheme.harbor"), swatch: "#0e7490" },
-              { value: "night", label: t("settings.appTheme.night"), swatch: "#34d399" },
-            ]}
-          />
+          <p className="mb-2 text-xs text-[var(--ink-muted)]">
+            {t("settings.appTheme.hint")}
+          </p>
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            {APP_THEME_CARDS.map((theme) => {
+              const active = settings.appTheme === theme.value;
+              return (
+                <button
+                  key={theme.value}
+                  type="button"
+                  onClick={() => updateSettings({ appTheme: theme.value })}
+                  className={`flex items-start gap-3 rounded-lg border px-3 py-3 text-left transition ${
+                    active
+                      ? "border-[var(--accent)] bg-[var(--accent-soft)]"
+                      : "border-[var(--line)] bg-[var(--surface-soft)] hover:border-[var(--accent)]/50"
+                  }`}
+                >
+                  <span
+                    className="mt-0.5 h-8 w-8 shrink-0 rounded-md border border-black/15"
+                    style={{ backgroundColor: theme.swatch }}
+                  />
+                  <span className="min-w-0">
+                    <span className="flex items-center gap-2">
+                      <span
+                        className={`text-sm font-semibold ${
+                          active ? "text-[var(--accent)]" : "text-[var(--ink)]"
+                        }`}
+                      >
+                        {t(
+                          `settings.appTheme.${theme.value}` as TranslationKey
+                        )}
+                      </span>
+                      <span className="rounded border border-[var(--line)] px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-[var(--ink-muted)]">
+                        {theme.mode === "light"
+                          ? t("settings.mode.light")
+                          : t("settings.mode.dark")}
+                      </span>
+                    </span>
+                    <span className="mt-1 block text-xs leading-snug text-[var(--ink-muted)]">
+                      {t(
+                        `settings.appTheme.${theme.value}.desc` as TranslationKey
+                      )}
+                    </span>
+                  </span>
+                </button>
+              );
+            })}
+          </div>
         </SettingBlock>
       </section>
 
@@ -115,20 +155,89 @@ export default function SettingsPage() {
         </SettingBlock>
 
         <SettingBlock icon={<Sparkles size={16} />} title={t("settings.boardTheme")}>
-          <ThemeSwatches
-            value={settings.boardTheme}
-            onChange={(boardTheme) =>
-              updateSettings({ boardTheme: boardTheme as BoardTheme })
-            }
-            options={[
-              { value: "forest", label: t("settings.theme.forest"), swatch: "#4a6b4a" },
-              { value: "classic", label: t("settings.theme.classic"), swatch: "#779556" },
-              { value: "walnut", label: t("settings.theme.walnut"), swatch: "#8b5a3c" },
-              { value: "ice", label: t("settings.theme.ice"), swatch: "#4a6d8c" },
-              { value: "midnight", label: t("settings.theme.midnight"), swatch: "#2f3b55" },
-              { value: "coral", label: t("settings.theme.coral"), swatch: "#b15a4a" },
-            ]}
-          />
+          <p className="mb-2 text-xs text-[var(--ink-muted)]">
+            {t("settings.boardTheme.hint")}
+          </p>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+            {BOARD_THEME_OPTIONS.map((option) => {
+              const active = settings.boardTheme === option.value;
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() =>
+                    updateSettings({ boardTheme: option.value as BoardTheme })
+                  }
+                  className={`rounded-lg border px-2.5 py-2 text-left transition ${
+                    active
+                      ? "border-[var(--accent)] bg-[var(--accent-soft)]"
+                      : "border-[var(--line)] bg-[var(--surface-soft)] hover:border-[var(--accent)]/40"
+                  }`}
+                >
+                  <span className="mb-1.5 flex h-7 overflow-hidden rounded border border-black/10">
+                    <span
+                      className="w-1/2"
+                      style={{ backgroundColor: option.swatchLight }}
+                    />
+                    <span
+                      className="w-1/2"
+                      style={{ backgroundColor: option.swatchDark }}
+                    />
+                  </span>
+                  <span
+                    className={`text-xs font-semibold ${
+                      active ? "text-[var(--accent)]" : "text-[var(--ink)]"
+                    }`}
+                  >
+                    {t(`settings.theme.${option.value}` as TranslationKey)}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </SettingBlock>
+
+        <SettingBlock icon={<Crown size={16} />} title={t("settings.pieceStyle")}>
+          <p className="mb-2 text-xs text-[var(--ink-muted)]">
+            {t("settings.pieceStyle.hint")}
+          </p>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+            {PIECE_STYLE_OPTIONS.map((option) => {
+              const active = settings.pieceStyle === option.value;
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() =>
+                    updateSettings({ pieceStyle: option.value as PieceStyle })
+                  }
+                  className={`flex items-center gap-2 rounded-lg border px-3 py-2.5 text-left transition ${
+                    active
+                      ? "border-[var(--accent)] bg-[var(--accent-soft)]"
+                      : "border-[var(--line)] bg-[var(--surface-soft)] hover:border-[var(--accent)]/40"
+                  }`}
+                >
+                  <span className="font-serif text-xl text-[var(--ink)]">
+                    {option.preview}
+                  </span>
+                  <span className="min-w-0">
+                    <span
+                      className={`block text-sm font-semibold ${
+                        active ? "text-[var(--accent)]" : "text-[var(--ink)]"
+                      }`}
+                    >
+                      {t(`settings.piece.${option.value}` as TranslationKey)}
+                    </span>
+                    <span className="block text-[11px] text-[var(--ink-muted)]">
+                      {t(
+                        `settings.piece.${option.value}.desc` as TranslationKey
+                      )}
+                    </span>
+                  </span>
+                </button>
+              );
+            })}
+          </div>
         </SettingBlock>
 
         <SettingBlock
@@ -258,7 +367,7 @@ function Segmented({
   onChange: (value: string) => void;
 }) {
   return (
-    <div className="flex flex-wrap gap-1.5">
+    <div className="relative z-10 flex flex-wrap gap-1.5">
       {options.map((option) => {
         const active = option.value === value;
         return (
@@ -280,44 +389,6 @@ function Segmented({
   );
 }
 
-function ThemeSwatches({
-  value,
-  options,
-  onChange,
-}: {
-  value: string;
-  options: { value: string; label: string; swatch: string }[];
-  onChange: (value: string) => void;
-}) {
-  return (
-    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-      {options.map((option) => {
-        const active = option.value === value;
-        return (
-          <button
-            key={option.value}
-            type="button"
-            onClick={() => onChange(option.value)}
-            className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-left text-sm transition ${
-              active
-                ? "border-[var(--accent)] bg-[var(--accent-soft)]"
-                : "border-[var(--line)] bg-[var(--surface-soft)] hover:border-[var(--accent)]/40"
-            }`}
-          >
-            <span
-              className="h-6 w-6 shrink-0 rounded-md border border-black/20"
-              style={{ backgroundColor: option.swatch }}
-            />
-            <span className={active ? "text-[var(--accent)]" : "text-[var(--ink)]"}>
-              {option.label}
-            </span>
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
 function ToggleRow({
   label,
   checked,
@@ -328,23 +399,24 @@ function ToggleRow({
   onChange: (value: boolean) => void;
 }) {
   return (
-    <label className="flex cursor-pointer items-center justify-between gap-4 border-b border-[var(--line)] py-3 last:border-0">
+    <div className="relative z-10 flex items-center justify-between gap-4 border-b border-[var(--line)] py-3 last:border-0">
       <span className="text-sm text-[var(--ink)]">{label}</span>
       <button
         type="button"
         role="switch"
         aria-checked={checked}
+        aria-label={label}
         onClick={() => onChange(!checked)}
-        className={`relative h-6 w-11 rounded-full transition ${
+        className={`relative h-6 w-11 shrink-0 rounded-full transition ${
           checked ? "bg-[var(--accent)]" : "bg-[var(--line)]"
         }`}
       >
         <span
-          className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-[var(--surface-elevated)] shadow-sm transition ${
+          className={`pointer-events-none absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-[var(--surface-elevated)] shadow-sm transition ${
             checked ? "translate-x-5" : ""
           }`}
         />
       </button>
-    </label>
+    </div>
   );
 }

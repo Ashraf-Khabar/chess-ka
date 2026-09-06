@@ -1,22 +1,29 @@
+import type { BoardTheme } from "@/features/chessboard/lib/boardThemes";
+import type { PieceStyle } from "@/features/chessboard/lib/pieceSets";
+
 export type AppLanguage = "fr" | "en";
 export type BoardSize = "sm" | "md" | "lg" | "xl";
-export type BoardTheme =
-  | "forest"
-  | "classic"
-  | "walnut"
-  | "ice"
-  | "midnight"
-  | "coral";
-export type AppTheme = "signal" | "carbon" | "harbor" | "night";
-export type FontPair = "desk" | "manrope" | "grotesk";
+export type { BoardTheme } from "@/features/chessboard/lib/boardThemes";
+export type { PieceStyle } from "@/features/chessboard/lib/pieceSets";
+
+export type AppTheme =
+  | "signal"
+  | "carbon"
+  | "harbor"
+  | "night"
+  | "emerald"
+  | "slate"
+  | "dusk"
+  | "paper";
+
 export type AnimationSpeed = "fast" | "normal" | "smooth";
 
 export interface AppSettings {
   language: AppLanguage;
   boardSize: BoardSize;
   boardTheme: BoardTheme;
+  pieceStyle: PieceStyle;
   appTheme: AppTheme;
-  fontPair: FontPair;
   animationSpeed: AnimationSpeed;
   engineDepth: number;
   showLiveBestArrow: boolean;
@@ -25,14 +32,14 @@ export interface AppSettings {
   showCoachPanel: boolean;
 }
 
-export const SETTINGS_COOKIE = "cpa-settings-v4";
+export const SETTINGS_COOKIE = "cpa-settings-v5";
 
 export const DEFAULT_SETTINGS: AppSettings = {
   language: "fr",
   boardSize: "lg",
   boardTheme: "classic",
+  pieceStyle: "classic",
   appTheme: "signal",
-  fontPair: "desk",
   animationSpeed: "normal",
   engineDepth: 14,
   showLiveBestArrow: true,
@@ -44,6 +51,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
 export const DARK_APP_THEMES: ReadonlySet<AppTheme> = new Set([
   "carbon",
   "night",
+  "dusk",
 ]);
 
 export const ANIMATION_MS: Record<AnimationSpeed, number> = {
@@ -61,7 +69,6 @@ export const BOARD_SIZE_MAX: Record<BoardSize, string> = {
 
 export const ENGINE_DEPTH_OPTIONS = [10, 12, 14, 16, 18] as const;
 
-/** Public GitHub repo used for support / stars / issues. */
 export const GITHUB_REPO_URL =
   process.env.NEXT_PUBLIC_GITHUB_URL ??
   "https://github.com/khaba/chess_ka";
@@ -73,37 +80,74 @@ const LEGACY_THEME: Record<string, AppTheme> = {
   midnight: "carbon",
   ink: "carbon",
   carbon: "carbon",
-  slate: "harbor",
+  slate: "slate",
   marble: "harbor",
   harbor: "harbor",
-  ember: "night",
+  ember: "dusk",
   arena: "night",
   night: "night",
+  emerald: "emerald",
+  dusk: "dusk",
+  paper: "paper",
 };
 
-const LEGACY_FONT: Record<string, FontPair> = {
-  sora: "desk",
-  studio: "desk",
-  desk: "desk",
-  manrope: "manrope",
-  grotesk: "grotesk",
-};
+const BOARD_THEME_SET = new Set<string>([
+  "classic",
+  "forest",
+  "walnut",
+  "maple",
+  "cherry",
+  "ice",
+  "ocean",
+  "midnight",
+  "graphite",
+  "coral",
+  "sand",
+  "emerald",
+  "lavender",
+  "contrast",
+]);
+
+const PIECE_STYLE_SET = new Set<string>([
+  "classic",
+  "mono",
+  "warm",
+  "cool",
+  "ink",
+  "alpha",
+]);
 
 export function parseSettings(raw: string | null): AppSettings {
   if (!raw) return { ...DEFAULT_SETTINGS };
   try {
     const parsed = JSON.parse(raw) as Partial<AppSettings> & {
       appTheme?: string;
+      boardTheme?: string;
+      pieceStyle?: string;
       fontPair?: string;
     };
     const next: AppSettings = {
       ...DEFAULT_SETTINGS,
-      ...parsed,
+      language: parsed.language ?? DEFAULT_SETTINGS.language,
+      boardSize: parsed.boardSize ?? DEFAULT_SETTINGS.boardSize,
+      animationSpeed: parsed.animationSpeed ?? DEFAULT_SETTINGS.animationSpeed,
+      engineDepth: parsed.engineDepth ?? DEFAULT_SETTINGS.engineDepth,
+      showLiveBestArrow:
+        parsed.showLiveBestArrow ?? DEFAULT_SETTINGS.showLiveBestArrow,
+      showNotation: parsed.showNotation ?? DEFAULT_SETTINGS.showNotation,
+      showMoveMarkers:
+        parsed.showMoveMarkers ?? DEFAULT_SETTINGS.showMoveMarkers,
+      showCoachPanel: parsed.showCoachPanel ?? DEFAULT_SETTINGS.showCoachPanel,
       appTheme:
         LEGACY_THEME[parsed.appTheme ?? ""] ?? DEFAULT_SETTINGS.appTheme,
-      fontPair:
-        LEGACY_FONT[parsed.fontPair ?? ""] ?? DEFAULT_SETTINGS.fontPair,
+      boardTheme: BOARD_THEME_SET.has(parsed.boardTheme ?? "")
+        ? (parsed.boardTheme as BoardTheme)
+        : DEFAULT_SETTINGS.boardTheme,
+      pieceStyle: PIECE_STYLE_SET.has(parsed.pieceStyle ?? "")
+        ? (parsed.pieceStyle as PieceStyle)
+        : DEFAULT_SETTINGS.pieceStyle,
     };
+
     if (
       !ENGINE_DEPTH_OPTIONS.includes(
         next.engineDepth as (typeof ENGINE_DEPTH_OPTIONS)[number]
@@ -122,7 +166,7 @@ export function applyDocumentSettings(settings: AppSettings): void {
   const root = document.documentElement;
   root.lang = settings.language;
   root.dataset.appTheme = settings.appTheme;
-  root.dataset.font = settings.fontPair;
+  root.dataset.font = "desk";
   const scheme = DARK_APP_THEMES.has(settings.appTheme) ? "dark" : "light";
   root.dataset.colorScheme = scheme;
   root.style.colorScheme = scheme;

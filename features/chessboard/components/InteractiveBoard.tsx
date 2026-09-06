@@ -49,88 +49,11 @@ import {
   ANIMATION_MS,
   BOARD_SIZE_MAX,
   type BoardSize,
-  type BoardTheme,
 } from "@/features/settings/lib/settingsTypes";
+import { BOARD_THEMES } from "@/features/chessboard/lib/boardThemes";
+import { getPieceRenderers } from "@/features/chessboard/lib/pieceSets";
 
 const BOARD_SIZE_ORDER: BoardSize[] = ["sm", "md", "lg", "xl"];
-
-const THEMES: Record<
-  BoardTheme,
-  { dark: CSSProperties; light: CSSProperties }
-> = {
-  forest: {
-    dark: {
-      backgroundColor: "#4a6b4a",
-      backgroundImage:
-        "linear-gradient(145deg, rgba(255,255,255,.06), transparent 42%), linear-gradient(0deg, rgba(0,0,0,.12), transparent 55%)",
-    },
-    light: {
-      backgroundColor: "#e8edc8",
-      backgroundImage:
-        "linear-gradient(145deg, rgba(255,255,255,.35), transparent 45%), linear-gradient(0deg, rgba(80,90,40,.06), transparent 50%)",
-    },
-  },
-  classic: {
-    dark: {
-      backgroundColor: "#779556",
-      backgroundImage:
-        "linear-gradient(160deg, rgba(255,255,255,.08), transparent 50%)",
-    },
-    light: {
-      backgroundColor: "#ebecd0",
-      backgroundImage:
-        "linear-gradient(160deg, rgba(255,255,255,.4), transparent 50%)",
-    },
-  },
-  walnut: {
-    dark: {
-      backgroundColor: "#8b5a3c",
-      backgroundImage:
-        "linear-gradient(145deg, rgba(255,255,255,.07), transparent 45%), linear-gradient(0deg, rgba(0,0,0,.18), transparent 55%)",
-    },
-    light: {
-      backgroundColor: "#f0d9b5",
-      backgroundImage:
-        "linear-gradient(145deg, rgba(255,255,255,.4), transparent 45%)",
-    },
-  },
-  ice: {
-    dark: {
-      backgroundColor: "#4a6d8c",
-      backgroundImage:
-        "linear-gradient(145deg, rgba(255,255,255,.1), transparent 45%)",
-    },
-    light: {
-      backgroundColor: "#dbe7f3",
-      backgroundImage:
-        "linear-gradient(145deg, rgba(255,255,255,.45), transparent 50%)",
-    },
-  },
-  midnight: {
-    dark: {
-      backgroundColor: "#2f3b55",
-      backgroundImage:
-        "linear-gradient(160deg, rgba(255,255,255,.08), transparent 50%)",
-    },
-    light: {
-      backgroundColor: "#c9d2e3",
-      backgroundImage:
-        "linear-gradient(160deg, rgba(255,255,255,.35), transparent 50%)",
-    },
-  },
-  coral: {
-    dark: {
-      backgroundColor: "#b15a4a",
-      backgroundImage:
-        "linear-gradient(145deg, rgba(255,255,255,.08), transparent 45%)",
-    },
-    light: {
-      backgroundColor: "#f3dfd2",
-      backgroundImage:
-        "linear-gradient(145deg, rgba(255,255,255,.4), transparent 50%)",
-    },
-  },
-};
 
 interface InteractiveBoardProps {
   game: UseChessGameResult;
@@ -195,7 +118,11 @@ function InteractiveBoardComponent({
 
   const boardSize = settings.boardSize;
   const animationMs = ANIMATION_MS[settings.animationSpeed];
-  const theme = THEMES[settings.boardTheme] ?? THEMES.forest;
+  const theme = BOARD_THEMES[settings.boardTheme] ?? BOARD_THEMES.classic;
+  const pieces = useMemo(
+    () => getPieceRenderers(settings.pieceStyle),
+    [settings.pieceStyle]
+  );
   const boardId = fillContainer ? "review-board" : "analysis-board";
 
   const clearSelection = useCallback(() => {
@@ -389,6 +316,7 @@ function InteractiveBoardComponent({
     id: boardId,
     position: fen,
     boardOrientation: orientation,
+    pieces,
     onPieceDrop,
     onSquareClick,
     squareStyles: boardSquareStyles,
@@ -416,6 +344,9 @@ function InteractiveBoardComponent({
         alt: "rgba(180, 140, 255, 0.85)",
         meta: SUGGESTION_ARROW_COLOR,
       },
+      color: SUGGESTION_ARROW_COLOR,
+      secondaryColor: LIVE_BEST_ARROW_COLOR,
+      tertiaryColor: "rgba(255, 120, 80, 0.85)",
       arrowLengthReducerDenominator: 7,
       sameTargetArrowLengthReducerDenominator: 4,
       arrowWidthDenominator: 5.5,
@@ -445,19 +376,21 @@ function InteractiveBoardComponent({
     ) : null;
 
   const controls = (
-    <div className="flex flex-col items-center gap-2">
+    <div className="board-controls flex flex-wrap items-center justify-center gap-1.5">
       {isOnVariation && (
-        <button
-          type="button"
-          onClick={returnToFork}
-          className="variation-return-btn"
-          title={t("board.returnForkHint")}
-        >
-          <Undo2 size={15} />
-          <span>{t("board.returnFork")}</span>
-        </button>
+        <>
+          <button
+            type="button"
+            onClick={returnToFork}
+            className="variation-return-btn"
+            title={t("board.returnForkHint")}
+          >
+            <Undo2 size={15} />
+            <span>{t("board.returnFork")}</span>
+          </button>
+          <div className="mx-1 h-5 w-px bg-[var(--line)]" />
+        </>
       )}
-      <div className="board-controls flex flex-wrap items-center justify-center gap-1.5">
       <NavButton label={t("board.start")} onClick={goStart} disabled={!canGoBack}>
         <ChevronFirst size={16} />
       </NavButton>
@@ -492,7 +425,6 @@ function InteractiveBoardComponent({
           <RotateCcw size={16} />
         </NavButton>
       )}
-    </div>
     </div>
   );
 
