@@ -118,7 +118,7 @@ export default function DashboardAnalysis() {
         }
         setGames(data.games);
         setFetchedUsername(data.username);
-        saveLibrary(data.username, data.games);
+        saveLibrary({ username: data.username, games: data.games });
       } catch (err) {
         setError(err instanceof Error ? err.message : "Fetch failed");
         setGames([]);
