@@ -68,7 +68,7 @@ export default function SettingsPage() {
           <Segmented
             value={settings.fontPair}
             options={[
-              { value: "studio", label: t("settings.font.studio") },
+              { value: "desk", label: t("settings.font.desk") },
               { value: "manrope", label: t("settings.font.manrope") },
               { value: "grotesk", label: t("settings.font.grotesk") },
             ]}
@@ -85,10 +85,10 @@ export default function SettingsPage() {
               updateSettings({ appTheme: appTheme as AppTheme })
             }
             options={[
-              { value: "atelier", label: t("settings.appTheme.atelier"), swatch: "#0d7a4f" },
-              { value: "ink", label: t("settings.appTheme.ink"), swatch: "#3ecf8e" },
-              { value: "marble", label: t("settings.appTheme.marble"), swatch: "#0f6f7c" },
-              { value: "arena", label: t("settings.appTheme.arena"), swatch: "#c4a35a" },
+              { value: "signal", label: t("settings.appTheme.signal"), swatch: "#c62828" },
+              { value: "carbon", label: t("settings.appTheme.carbon"), swatch: "#ef5350" },
+              { value: "harbor", label: t("settings.appTheme.harbor"), swatch: "#0e7490" },
+              { value: "night", label: t("settings.appTheme.night"), swatch: "#34d399" },
             ]}
           />
         </SettingBlock>

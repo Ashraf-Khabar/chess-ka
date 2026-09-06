@@ -7,8 +7,8 @@ export type BoardTheme =
   | "ice"
   | "midnight"
   | "coral";
-export type AppTheme = "atelier" | "ink" | "marble" | "arena";
-export type FontPair = "studio" | "manrope" | "grotesk";
+export type AppTheme = "signal" | "carbon" | "harbor" | "night";
+export type FontPair = "desk" | "manrope" | "grotesk";
 export type AnimationSpeed = "fast" | "normal" | "smooth";
 
 export interface AppSettings {
@@ -25,14 +25,14 @@ export interface AppSettings {
   showCoachPanel: boolean;
 }
 
-export const SETTINGS_COOKIE = "cpa-settings-v3";
+export const SETTINGS_COOKIE = "cpa-settings-v4";
 
 export const DEFAULT_SETTINGS: AppSettings = {
   language: "fr",
   boardSize: "lg",
   boardTheme: "classic",
-  appTheme: "atelier",
-  fontPair: "studio",
+  appTheme: "signal",
+  fontPair: "desk",
   animationSpeed: "normal",
   engineDepth: 14,
   showLiveBestArrow: true,
@@ -42,8 +42,8 @@ export const DEFAULT_SETTINGS: AppSettings = {
 };
 
 export const DARK_APP_THEMES: ReadonlySet<AppTheme> = new Set([
-  "ink",
-  "arena",
+  "carbon",
+  "night",
 ]);
 
 export const ANIMATION_MS: Record<AnimationSpeed, number> = {
@@ -67,19 +67,24 @@ export const GITHUB_REPO_URL =
   "https://github.com/khaba/chess_ka";
 
 const LEGACY_THEME: Record<string, AppTheme> = {
-  forest: "atelier",
-  midnight: "ink",
-  slate: "marble",
-  ember: "arena",
-  atelier: "atelier",
-  ink: "ink",
-  marble: "marble",
-  arena: "arena",
+  forest: "signal",
+  atelier: "signal",
+  signal: "signal",
+  midnight: "carbon",
+  ink: "carbon",
+  carbon: "carbon",
+  slate: "harbor",
+  marble: "harbor",
+  harbor: "harbor",
+  ember: "night",
+  arena: "night",
+  night: "night",
 };
 
 const LEGACY_FONT: Record<string, FontPair> = {
-  sora: "studio",
-  studio: "studio",
+  sora: "desk",
+  studio: "desk",
+  desk: "desk",
   manrope: "manrope",
   grotesk: "grotesk",
 };

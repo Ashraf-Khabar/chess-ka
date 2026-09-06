@@ -19,6 +19,8 @@ interface MoveListProps {
   isOnVariation?: boolean;
   /** Jump to a main-line ply (exits the variation). */
   onSelectMainPly?: (ply: number) => void;
+  /** Return to the last real game ply (fork point). */
+  onReturnToFork?: () => void;
   currentQuality?: MoveQuality | null;
   compact?: boolean;
 }
@@ -32,6 +34,7 @@ export default function MoveList({
   variation = [],
   isOnVariation = false,
   onSelectMainPly,
+  onReturnToFork,
   currentQuality = null,
   compact = false,
 }: MoveListProps) {
@@ -87,10 +90,30 @@ export default function MoveList({
     <div
       className={
         compact
-          ? "h-full max-h-full overflow-y-auto rounded-lg border border-[var(--line)] bg-[var(--surface-soft)]"
-          : "max-h-56 overflow-y-auto rounded-lg border border-[var(--line)] bg-[var(--surface-soft)]"
+          ? "flex h-full max-h-full flex-col overflow-hidden rounded-lg border border-[var(--line)] bg-[var(--surface-soft)]"
+          : "max-h-56 overflow-hidden rounded-lg border border-[var(--line)] bg-[var(--surface-soft)]"
       }
     >
+      {isOnVariation && onReturnToFork && (
+        <div className="variation-banner shrink-0">
+          <div className="min-w-0">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--accent)]">
+              {t("moves.variation")}
+            </p>
+            <p className="truncate text-[11px] text-[var(--ink-muted)]">
+              {t("moves.variationHint")}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onReturnToFork}
+            className="shrink-0 rounded-md border border-[var(--accent)] bg-[var(--accent-soft)] px-2.5 py-1.5 text-[11px] font-bold text-[var(--accent)] transition hover:bg-[var(--accent)] hover:text-[var(--on-accent)]"
+          >
+            {t("moves.backToGame")}
+          </button>
+        </div>
+      )}
+      <div className="min-h-0 flex-1 overflow-y-auto">
       <table className="w-full text-sm">
         <tbody>
           {showTree && forkPly === -1 && (
@@ -176,6 +199,7 @@ export default function MoveList({
           ))}
         </tbody>
       </table>
+      </div>
     </div>
   );
 }

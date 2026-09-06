@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import {
-  Outfit,
-  Syne,
+  Bricolage_Grotesque,
+  DM_Sans,
   Manrope,
   Fraunces,
   Space_Grotesk,
@@ -12,14 +12,14 @@ import MainShell from "@/features/components/layout/MainShell";
 import AppProviders from "@/features/settings/components/AppProviders";
 import "./globals.css";
 
-const outfit = Outfit({
+const bricolage = Bricolage_Grotesque({
   subsets: ["latin"],
-  variable: "--font-outfit",
+  variable: "--font-bricolage",
 });
 
-const syne = Syne({
+const dmSans = DM_Sans({
   subsets: ["latin"],
-  variable: "--font-syne",
+  variable: "--font-dm-sans",
 });
 
 const manrope = Manrope({
@@ -44,7 +44,7 @@ const literata = Literata({
 
 export const metadata: Metadata = {
   title: "Chess Pro Analyzer",
-  description: "Advanced chess analysis and opening catalog",
+  description: "Train with Stockfish, coach feedback, and game review",
 };
 
 export default function RootLayout({
@@ -55,13 +55,13 @@ export default function RootLayout({
   return (
     <html
       lang="fr"
-      data-app-theme="atelier"
-      data-font="studio"
+      data-app-theme="signal"
+      data-font="desk"
       data-color-scheme="light"
       suppressHydrationWarning
     >
       <body
-        className={`${outfit.variable} ${syne.variable} ${manrope.variable} ${fraunces.variable} ${spaceGrotesk.variable} ${literata.variable} font-sans min-h-dvh flex flex-col antialiased`}
+        className={`${bricolage.variable} ${dmSans.variable} ${manrope.variable} ${fraunces.variable} ${spaceGrotesk.variable} ${literata.variable} font-sans min-h-dvh flex flex-col antialiased`}
       >
         <AppProviders>
           <Navbar />

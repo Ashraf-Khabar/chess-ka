@@ -2,12 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  Settings,
-  BookOpen,
-  Activity,
-  Languages,
-} from "lucide-react";
+import { Settings, BookOpen, Activity, Languages } from "lucide-react";
 import { useSettings } from "@/features/settings/context/SettingsContext";
 import { GITHUB_REPO_URL } from "@/features/settings/lib/settingsTypes";
 import GitHubIcon from "@/features/components/icons/GitHubIcon";
@@ -20,12 +15,14 @@ export default function Navbar() {
     <nav className="app-nav sticky top-0 z-40">
       <div className="app-nav-inner">
         <Link href="/" className="app-brand group">
-          <span className="app-brand-mark" aria-hidden />
-          <span className="font-display text-[1.4rem] leading-none tracking-tight sm:text-[1.65rem]">
+          <span className="app-brand-mark" aria-hidden>
+            CPA
+          </span>
+          <span className="font-display text-[1.35rem] leading-none tracking-tight sm:text-[1.55rem]">
+            <span className="text-[var(--ink)]">Chess</span>{" "}
             <span className="text-[var(--accent)] transition group-hover:brightness-110">
-              Chess
+              Pro
             </span>
-            <span className="text-[var(--ink)]"> Pro</span>
           </span>
         </Link>
 

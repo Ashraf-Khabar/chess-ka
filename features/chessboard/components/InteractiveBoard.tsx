@@ -445,7 +445,19 @@ function InteractiveBoardComponent({
     ) : null;
 
   const controls = (
-    <div className="board-controls flex flex-wrap items-center justify-center gap-1.5">
+    <div className="flex flex-col items-center gap-2">
+      {isOnVariation && (
+        <button
+          type="button"
+          onClick={returnToFork}
+          className="variation-return-btn"
+          title={t("board.returnForkHint")}
+        >
+          <Undo2 size={15} />
+          <span>{t("board.returnFork")}</span>
+        </button>
+      )}
+      <div className="board-controls flex flex-wrap items-center justify-center gap-1.5">
       <NavButton label={t("board.start")} onClick={goStart} disabled={!canGoBack}>
         <ChevronFirst size={16} />
       </NavButton>
@@ -454,6 +466,7 @@ function InteractiveBoardComponent({
       </NavButton>
       <span className="min-w-[4rem] text-center font-mono text-[11px] text-[var(--ink-muted)]">
         {plyIndex + 1}/{history.length || 0}
+        {isOnVariation ? " · var" : ""}
       </span>
       <NavButton
         label={t("board.forward")}
@@ -474,20 +487,12 @@ function InteractiveBoardComponent({
       >
         <FlipHorizontal2 size={16} />
       </NavButton>
-      {isOnVariation && (
-        <NavButton
-          label={t("board.returnFork")}
-          onClick={returnToFork}
-          emphasize
-        >
-          <Undo2 size={16} />
-        </NavButton>
-      )}
       {!fillContainer && (
         <NavButton label={t("board.reset")} onClick={reset}>
           <RotateCcw size={16} />
         </NavButton>
       )}
+    </div>
     </div>
   );
 

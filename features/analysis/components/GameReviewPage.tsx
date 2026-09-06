@@ -276,6 +276,7 @@ export default function GameReviewPage({ gameId }: GameReviewPageProps) {
                     variation={game.variation}
                     isOnVariation={game.isOnVariation}
                     onSelectMainPly={game.goToMainPly}
+                    onReturnToFork={game.returnToFork}
                     currentQuality={classification.quality}
                     compact
                   />

@@ -175,6 +175,7 @@ export default function OpeningsCatalog() {
               variation={game.variation}
               isOnVariation={game.isOnVariation}
               onSelectMainPly={game.goToMainPly}
+              onReturnToFork={game.returnToFork}
               currentQuality={classification.quality}
             />
           </div>

@@ -23,7 +23,7 @@ export interface UseChessGameResult {
   goToPly: (ply: number) => void;
   /** Leave the variation and jump to a ply on the main game. */
   goToMainPly: (ply: number) => void;
-  /** Leave the variation and return to the fork position. */
+  /** Leave the variation and return to the fork position (last real game ply). */
   returnToFork: () => void;
   goBack: () => void;
   goForward: () => void;
@@ -39,6 +39,11 @@ interface GameView {
   mainLine: Move[];
   forkPly: number | null;
   variation: Move[];
+  /**
+   * When true (PGN / imported game), the main line must not grow —
+   * any alternate or post-game move becomes a variation.
+   */
+  mainLineLocked: boolean;
 }
 
 function sameMove(
@@ -71,6 +76,7 @@ export function useChessGame(
     mainLine: [],
     forkPly: null,
     variation: [],
+    mainLineLocked: false,
   }));
 
   const buildFenAtPly = useCallback((moves: Move[], ply: number): string => {
@@ -93,7 +99,8 @@ export function useChessGame(
       ply: number,
       mainLine: Move[],
       forkPly: number | null,
-      variation: Move[]
+      variation: Move[],
+      mainLineLocked: boolean
     ) => {
       const clamped = Math.max(-1, Math.min(ply, moves.length - 1));
       setView({
@@ -103,6 +110,7 @@ export function useChessGame(
         mainLine,
         forkPly,
         variation,
+        mainLineLocked,
       });
     },
     [buildFenAtPly]
@@ -120,7 +128,8 @@ export function useChessGame(
           atEnd ? moves.length - 1 : -1,
           moves,
           null,
-          []
+          [],
+          true
         );
         return true;
       } catch (error) {
@@ -152,9 +161,10 @@ export function useChessGame(
         if (!played) return false;
 
         masterRef.current = base;
-        const { mainLine, forkPly, variation, plyIndex } = view;
+        const { mainLine, forkPly, variation, plyIndex, mainLineLocked } =
+          view;
 
-        // Already exploring a side-line
+        // Already exploring a side-line — keep extending / rewriting it
         if (forkPly !== null) {
           const prefixLen = forkPly + 1;
           const varCursor = plyIndex - prefixLen; // -1 if standing on fork ply
@@ -171,7 +181,8 @@ export function useChessGame(
             nextHistory.length - 1,
             mainLine,
             forkPly,
-            nextVariation
+            nextVariation,
+            mainLineLocked
           );
           return true;
         }
@@ -179,19 +190,40 @@ export function useChessGame(
         // On main line
         const expected = mainLine[plyIndex + 1];
         if (expected && sameMove(expected, played)) {
-          // Follow the existing main move
-          commitView(mainLine, plyIndex + 1, mainLine, null, []);
+          commitView(mainLine, plyIndex + 1, mainLine, null, [], mainLineLocked);
           return true;
         }
 
-        if (!expected) {
-          // Extend the main game (end of PGN or free play)
+        const pastEnd = !expected;
+        const diverges = Boolean(expected);
+
+        // Imported game: any new idea (mid-game or after the last move) = fork
+        if (mainLineLocked && (diverges || pastEnd)) {
+          const nextFork = plyIndex;
+          const nextVariation = [played];
+          const nextHistory = [
+            ...mainLine.slice(0, nextFork + 1),
+            ...nextVariation,
+          ];
+          commitView(
+            nextHistory,
+            nextHistory.length - 1,
+            mainLine,
+            nextFork,
+            nextVariation,
+            true
+          );
+          return true;
+        }
+
+        // Free play: grow the main line
+        if (pastEnd) {
           const nextMain = [...mainLine.slice(0, plyIndex + 1), played];
-          commitView(nextMain, nextMain.length - 1, nextMain, null, []);
+          commitView(nextMain, nextMain.length - 1, nextMain, null, [], false);
           return true;
         }
 
-        // Fork: keep main line, start a variation
+        // Free play: go back and play something else → fork
         const nextFork = plyIndex;
         const nextVariation = [played];
         const nextHistory = [
@@ -203,7 +235,8 @@ export function useChessGame(
           nextHistory.length - 1,
           mainLine,
           nextFork,
-          nextVariation
+          nextVariation,
+          false
         );
         return true;
       } catch {
@@ -220,21 +253,43 @@ export function useChessGame(
         ply,
         view.mainLine,
         view.forkPly,
-        view.variation
+        view.variation,
+        view.mainLineLocked
       ),
-    [commitView, view.forkPly, view.history, view.mainLine, view.variation]
+    [
+      commitView,
+      view.forkPly,
+      view.history,
+      view.mainLine,
+      view.mainLineLocked,
+      view.variation,
+    ]
   );
 
   const goToMainPly = useCallback(
     (ply: number) =>
-      commitView(view.mainLine, ply, view.mainLine, null, []),
-    [commitView, view.mainLine]
+      commitView(
+        view.mainLine,
+        ply,
+        view.mainLine,
+        null,
+        [],
+        view.mainLineLocked
+      ),
+    [commitView, view.mainLine, view.mainLineLocked]
   );
 
   const returnToFork = useCallback(() => {
     if (view.forkPly === null) return;
-    commitView(view.mainLine, view.forkPly, view.mainLine, null, []);
-  }, [commitView, view.forkPly, view.mainLine]);
+    commitView(
+      view.mainLine,
+      view.forkPly,
+      view.mainLine,
+      null,
+      [],
+      view.mainLineLocked
+    );
+  }, [commitView, view.forkPly, view.mainLine, view.mainLineLocked]);
 
   const goBack = useCallback(
     () =>
@@ -243,13 +298,15 @@ export function useChessGame(
         view.plyIndex - 1,
         view.mainLine,
         view.forkPly,
-        view.variation
+        view.variation,
+        view.mainLineLocked
       ),
     [
       commitView,
       view.forkPly,
       view.history,
       view.mainLine,
+      view.mainLineLocked,
       view.plyIndex,
       view.variation,
     ]
@@ -262,13 +319,15 @@ export function useChessGame(
         view.plyIndex + 1,
         view.mainLine,
         view.forkPly,
-        view.variation
+        view.variation,
+        view.mainLineLocked
       ),
     [
       commitView,
       view.forkPly,
       view.history,
       view.mainLine,
+      view.mainLineLocked,
       view.plyIndex,
       view.variation,
     ]
@@ -276,8 +335,22 @@ export function useChessGame(
 
   const goStart = useCallback(
     () =>
-      commitView(view.history, -1, view.mainLine, view.forkPly, view.variation),
-    [commitView, view.forkPly, view.history, view.mainLine, view.variation]
+      commitView(
+        view.history,
+        -1,
+        view.mainLine,
+        view.forkPly,
+        view.variation,
+        view.mainLineLocked
+      ),
+    [
+      commitView,
+      view.forkPly,
+      view.history,
+      view.mainLine,
+      view.mainLineLocked,
+      view.variation,
+    ]
   );
 
   const goEnd = useCallback(
@@ -287,9 +360,17 @@ export function useChessGame(
         view.history.length - 1,
         view.mainLine,
         view.forkPly,
-        view.variation
+        view.variation,
+        view.mainLineLocked
       ),
-    [commitView, view.forkPly, view.history, view.mainLine, view.variation]
+    [
+      commitView,
+      view.forkPly,
+      view.history,
+      view.mainLine,
+      view.mainLineLocked,
+      view.variation,
+    ]
   );
 
   const reset = useCallback(() => {
@@ -301,6 +382,7 @@ export function useChessGame(
       mainLine: [],
       forkPly: null,
       variation: [],
+      mainLineLocked: false,
     });
   }, []);
 
