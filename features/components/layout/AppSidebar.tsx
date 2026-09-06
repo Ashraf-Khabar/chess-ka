@@ -9,28 +9,29 @@ import { APP_NAV_ITEMS } from "@/features/components/layout/navItems";
 import GitHubIcon from "@/features/components/icons/GitHubIcon";
 
 /**
- * Desktop sidebar navigation — Linear/Vercel-inspired glass rail.
+ * Desktop icon rail — symbols only, stage gets the rest of the viewport.
  */
 export default function AppSidebar() {
   const pathname = usePathname();
   const { t, settings, updateSettings } = useSettings();
 
   return (
-    <aside className="app-sidebar hidden md:flex" aria-label={t("nav.menu")}>
+    <aside className="app-sidebar hidden lg:flex" aria-label={t("nav.menu")}>
       <div className="app-sidebar-inner">
-        <Link href="/" className="app-sidebar-brand group">
-          <span className="app-sidebar-mark" aria-hidden>
-            CPA
-          </span>
-          <span className="app-sidebar-title">
-            Chess<span className="text-[var(--accent)]">Pro</span>
-          </span>
+        <Link
+          href="/"
+          className="app-sidebar-brand"
+          title="Chess Pro"
+          aria-label="Chess Pro"
+        >
+          CP
         </Link>
 
         <nav className="app-sidebar-nav">
           {APP_NAV_ITEMS.map((item) => {
             const Icon = item.icon;
             const active = item.match(pathname);
+            const label = t(item.labelKey);
             return (
               <Link
                 key={item.href}
@@ -38,9 +39,10 @@ export default function AppSidebar() {
                 data-active={active ? "true" : "false"}
                 className="app-sidebar-link"
                 aria-current={active ? "page" : undefined}
+                aria-label={label}
+                title={label}
               >
-                <Icon size={18} strokeWidth={active ? 2.25 : 1.75} />
-                <span>{t(item.labelKey)}</span>
+                <Icon size={20} strokeWidth={active ? 2.35 : 1.85} aria-hidden />
               </Link>
             );
           })}
@@ -56,9 +58,9 @@ export default function AppSidebar() {
             }
             className="app-sidebar-link app-sidebar-link--ghost"
             title={t("settings.language")}
+            aria-label={t("settings.language")}
           >
-            <Languages size={18} />
-            <span>{settings.language.toUpperCase()}</span>
+            <Languages size={18} aria-hidden />
           </button>
 
           <Link
@@ -67,9 +69,9 @@ export default function AppSidebar() {
             rel="noopener noreferrer"
             className="app-sidebar-link app-sidebar-link--ghost"
             title={t("nav.support")}
+            aria-label={t("nav.support")}
           >
             <GitHubIcon size={18} />
-            <span>GitHub</span>
           </Link>
         </div>
       </div>

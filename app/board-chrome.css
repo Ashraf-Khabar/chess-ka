@@ -1,0 +1,570 @@
+﻿/* =============================================================================
+   Chess Pro — board chrome
+   Board frames, move-quality markers, coach panel, engine bits.
+   Depends on tokens from design-system.css.
+   ========================================================================== */
+
+/* ------------------------------------------------------------ board frame */
+.board-root {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+}
+
+.board-root--fill {
+  min-height: 0;
+  max-height: 100%;
+}
+
+.board-stage-wrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  min-width: 0;
+}
+
+.board-frame {
+  position: relative;
+  padding: 0.55rem;
+  border: var(--rule);
+  background: var(--surface);
+}
+
+.board-frame-rich {
+  border-color: var(--line-strong);
+}
+
+.board-bevel {
+  pointer-events: none;
+  position: absolute;
+  inset: 0.28rem;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 8%, transparent);
+  z-index: 2;
+}
+
+.board-stage {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  height: 100%;
+}
+
+/* Bare: edge-to-edge square, no chrome (mobile sticky board) */
+.board-bare {
+  width: 100%;
+  max-width: 100%;
+}
+
+.board-skeleton {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: var(--surface);
+  color: var(--ink-faint);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+/* Soften square highlight changes without fighting piece transforms */
+.board-stage [data-square] {
+  transition: background-color 380ms ease, box-shadow 380ms ease;
+}
+
+/* --------------------------------------------------------- board controls */
+.board-size-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  width: 100%;
+}
+
+.board-size-bar--bare {
+  padding: 0.35rem 0.55rem 0.15rem;
+  margin-bottom: 0;
+  border-bottom: var(--rule);
+  background: var(--stage);
+}
+
+.board-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  padding: 0.4rem 0.35rem;
+}
+
+.board-controls--bare {
+  justify-content: space-evenly;
+  gap: 0.15rem;
+  padding: 0.3rem 0.25rem;
+  border-top: var(--rule);
+  background: var(--surface);
+}
+
+.board-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: var(--rule);
+  border-radius: var(--radius-control);
+  background: var(--surface-elevated);
+  color: var(--ink);
+  transition: color 140ms ease, border-color 140ms ease;
+}
+
+.board-btn:hover:not(:disabled) {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.board-btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.board-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.board-ply-counter {
+  min-width: 4rem;
+  text-align: center;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.6875rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-muted);
+}
+
+.board-controls--bare .board-ply-counter {
+  min-width: 3.25rem;
+  font-size: 0.625rem;
+}
+
+.board-divider {
+  width: 1px;
+  height: 1.25rem;
+  margin-inline: 0.25rem;
+  background: var(--line);
+}
+
+/* ------------------------------------------------------------- eval strip */
+.eval-bar {
+  position: relative;
+  width: 1.6rem;
+  min-height: 8rem;
+  overflow: hidden;
+  border: var(--rule);
+  background: #0b0d0c;
+}
+
+.eval-bar-fill {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #e8eee4;
+  transition: height 480ms var(--ease-out);
+}
+
+.eval-bar-mid {
+  position: absolute;
+  left: 2px;
+  right: 2px;
+  top: 50%;
+  height: 1px;
+  transform: translateY(-50%);
+  background: var(--accent);
+  opacity: 0.5;
+}
+
+/* --------------------------------------------------------- quality badges */
+.quality-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.16rem 0.4rem;
+  border: 1px solid currentColor;
+  border-radius: 0;
+  background: transparent;
+  font-size: 0.5625rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.quality-brilliant,
+.quality-great {
+  color: var(--eval-brilliant);
+}
+.quality-best {
+  color: var(--eval-best);
+}
+.quality-excellent,
+.quality-good {
+  color: var(--eval-good);
+}
+.quality-inaccuracy {
+  color: var(--eval-inaccuracy);
+}
+.quality-mistake,
+.quality-miss {
+  color: var(--eval-mistake);
+}
+.quality-blunder {
+  color: var(--eval-blunder);
+}
+
+/* --------------------------------------------------------------- variation */
+.move-variation {
+  margin-left: 0.35rem;
+  padding: 0.5rem 0.6rem;
+  border-left: 2px solid var(--accent);
+  background: var(--accent-soft);
+}
+
+.variation-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.5rem 0.65rem;
+  border-bottom: var(--rule);
+  background: var(--accent-soft);
+}
+
+.variation-return-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 2rem;
+  padding: 0.3rem 0.6rem;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  font-size: 0.625rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.variation-return-btn:hover {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+/* ------------------------------------------------------------ coach panel */
+.coach-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  min-height: 0;
+}
+
+.coach-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding-bottom: 0.65rem;
+  border-bottom: var(--rule);
+}
+
+.coach-header-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  flex-shrink: 0;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+}
+
+.coach-move-row {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.65rem 0.7rem;
+  border: var(--rule);
+  background: var(--surface-soft);
+}
+
+.coach-quality-img {
+  width: 2.15rem;
+  height: 2.15rem;
+  flex-shrink: 0;
+  object-fit: contain;
+}
+
+.coach-pill {
+  margin-left: auto;
+  flex-shrink: 0;
+  padding: 0.22rem 0.45rem;
+  border: var(--rule);
+  font-size: 0.5625rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+
+.coach-body {
+  min-width: 0;
+}
+
+.coach-text {
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: var(--ink-muted);
+}
+
+.coach-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 0.7rem 0.8rem;
+  border: var(--rule);
+  border-left: 2px solid var(--line-strong);
+  background: var(--surface-soft);
+}
+
+.coach-card-why {
+  border-left-color: var(--eval-inaccuracy);
+}
+
+.coach-card-fix {
+  border-left-color: var(--eval-blunder);
+  align-items: center;
+}
+
+.coach-card-best {
+  border-left-color: var(--accent);
+}
+
+.coach-card-label {
+  font-size: 0.5625rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin-bottom: 0.25rem;
+}
+
+.coach-card-text {
+  font-size: 0.85rem;
+  line-height: 1.55;
+  color: var(--ink);
+}
+
+.coach-hint {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.4rem;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: var(--ink-faint);
+}
+
+/* ---------------------------------------------------- on-board annotations */
+.last-move-wash {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.move-quality-overlay {
+  position: absolute;
+  z-index: 6;
+  pointer-events: none;
+}
+
+.move-classify-layer {
+  z-index: 7;
+}
+
+.square-classify-blur {
+  position: absolute;
+  inset: 0;
+  background: color-mix(in srgb, var(--ink) 20%, transparent);
+  animation: squareBlurIn 180ms ease both;
+}
+
+@keyframes squareBlurIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.move-quality-badge {
+  position: absolute;
+  top: 2%;
+  right: 2%;
+  width: 48%;
+  max-width: 2.6rem;
+  min-width: 1.6rem;
+  aspect-ratio: 1;
+  display: block;
+  object-fit: contain;
+  pointer-events: none;
+  transform-origin: top right;
+  will-change: transform, opacity;
+  opacity: 0;
+  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.45));
+}
+
+.move-quality-marker-anim {
+  opacity: 1;
+}
+
+.square-classify-loader {
+  position: absolute;
+  top: 6%;
+  right: 6%;
+  width: 38%;
+  max-width: 2rem;
+  min-width: 1.4rem;
+  aspect-ratio: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface-elevated) 88%, var(--ink));
+  animation: squareLoaderPop 260ms var(--ease-out) both;
+}
+
+.square-classify-loader-ring {
+  width: 55%;
+  height: 55%;
+  border-radius: 999px;
+  border: 2.5px solid rgba(255, 255, 255, 0.18);
+  border-top-color: var(--accent);
+  animation: squareLoaderSpin 650ms linear infinite;
+}
+
+@keyframes squareLoaderPop {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes squareLoaderSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.move-quality-marker--good,
+.move-quality-marker--excellent {
+  animation: markerSoftIn 520ms var(--ease-out) both;
+}
+
+.move-quality-marker--best,
+.move-quality-marker--great,
+.move-quality-marker--brilliant,
+.move-quality-marker--book {
+  animation: markerPop 720ms var(--ease-out) both;
+}
+
+.move-quality-marker--inaccuracy,
+.move-quality-marker--mistake,
+.move-quality-marker--miss,
+.move-quality-marker--blunder {
+  animation: markerShake 720ms var(--ease-out) both;
+}
+
+.move-quality-marker-pop {
+  animation: markerPop 720ms var(--ease-out) both;
+}
+
+@keyframes markerSoftIn {
+  from {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes markerPop {
+  0% {
+    opacity: 0;
+    transform: scale(0.25) translateY(8px);
+  }
+  45% {
+    opacity: 1;
+    transform: scale(1.35) translateY(-2px);
+  }
+  70% {
+    transform: scale(0.92);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes markerShake {
+  0% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  35% {
+    opacity: 1;
+    transform: scale(1.25);
+  }
+  55% {
+    transform: translateX(-4px) rotate(-6deg) scale(1.1);
+  }
+  75% {
+    transform: translateX(4px) rotate(6deg) scale(1.05);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0) rotate(0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .move-quality-badge,
+  .move-quality-marker-anim,
+  .move-quality-marker-pop,
+  .move-quality-marker--good,
+  .move-quality-marker--excellent,
+  .move-quality-marker--best,
+  .move-quality-marker--great,
+  .move-quality-marker--brilliant,
+  .move-quality-marker--book,
+  .move-quality-marker--inaccuracy,
+  .move-quality-marker--mistake,
+  .move-quality-marker--miss,
+  .move-quality-marker--blunder,
+  .square-classify-loader,
+  .square-classify-loader-ring,
+  .square-classify-blur,
+  .last-move-wash {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}

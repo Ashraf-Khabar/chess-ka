@@ -12,6 +12,7 @@ import {
 import { getCookie, setCookie } from "@/features/settings/lib/cookies";
 import {
   DEFAULT_SETTINGS,
+  LEGACY_SETTINGS_COOKIES,
   SETTINGS_COOKIE,
   parseSettings,
   applyDocumentSettings,
@@ -38,16 +39,18 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    const raw =
-      getCookie(SETTINGS_COOKIE) ??
-      getCookie("cpa-settings-v4") ??
-      getCookie("cpa-settings-v3") ??
-      getCookie("cpa-settings-v2");
+    const current = getCookie(SETTINGS_COOKIE);
+    let raw = current;
+    for (const legacy of LEGACY_SETTINGS_COOKIES) {
+      if (raw) break;
+      raw = getCookie(legacy);
+    }
     const fromCookie = parseSettings(raw);
     setSettings(fromCookie);
     setHydrated(true);
     applyDocumentSettings(fromCookie);
-    if (raw && !getCookie(SETTINGS_COOKIE)) {
+    // Migrate legacy cookies (and legacy theme names) onto the current key.
+    if (!current) {
       setCookie(SETTINGS_COOKIE, JSON.stringify(fromCookie));
     }
   }, []);

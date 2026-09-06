@@ -9,6 +9,7 @@ import {
   type CSSProperties,
   type ReactNode,
 } from "react";
+
 import {
   Chessboard,
   type Arrow,
@@ -120,6 +121,25 @@ function InteractiveBoardComponent({
   useEffect(() => {
     setOrientation(initialOrientation);
   }, [initialOrientation]);
+
+  /*
+   * react-chessboard measures its container on mount. If it mounts while the
+   * stage still has zero size (hidden branch, sheet transition, first paint)
+   * it throws "Square width not found". Gate the mount on a real measurement.
+   */
+  const [stageEl, setStageEl] = useState<HTMLDivElement | null>(null);
+  const [stageReady, setStageReady] = useState(false);
+
+  useEffect(() => {
+    if (!stageEl) return;
+    const measure = () => {
+      const rect = stageEl.getBoundingClientRect();
+      setStageReady(rect.width > 32 && rect.height > 32);
+    };
+    const observer = new ResizeObserver(measure);
+    observer.observe(stageEl);
+    return () => observer.disconnect();
+  }, [stageEl]);
 
   const [moveFrom, setMoveFrom] = useState<Square | null>(null);
   const [optionSquares, setOptionSquares] = useState<
@@ -342,9 +362,8 @@ function InteractiveBoardComponent({
     boardStyle: {
       width: "100%",
       height: "100%",
-      borderRadius: bare ? "0" : "6px",
+      borderRadius: "0",
       overflow: "hidden",
-      boxShadow: bare ? "none" : "inset 0 0 0 1px rgba(0,0,0,.25)",
     },
     arrowOptions: {
       colors: {
@@ -386,11 +405,7 @@ function InteractiveBoardComponent({
     ) : null;
 
   const controls = (
-    <div
-      className={`board-controls flex flex-wrap items-center justify-center gap-1.5 ${
-        bare ? "board-controls--bare" : ""
-      }`}
-    >
+    <div className={`board-controls ${bare ? "board-controls--bare" : ""}`}>
       {isOnVariation && (
         <>
           <button
@@ -399,10 +414,10 @@ function InteractiveBoardComponent({
             className="variation-return-btn"
             title={t("board.returnForkHint")}
           >
-            <Undo2 size={15} />
+            <Undo2 size={14} />
             <span>{t("board.returnFork")}</span>
           </button>
-          <div className="mx-1 h-5 w-px bg-[var(--line)]" />
+          <span className="board-divider" aria-hidden />
         </>
       )}
       <NavButton label={t("board.start")} onClick={goStart} disabled={!canGoBack}>
@@ -411,7 +426,7 @@ function InteractiveBoardComponent({
       <NavButton label={t("board.back")} onClick={goBack} disabled={!canGoBack}>
         <ChevronLeft size={16} />
       </NavButton>
-      <span className="board-ply-counter min-w-[4rem] text-center font-mono text-[11px] text-[var(--ink-muted)]">
+      <span className="board-ply-counter">
         {plyIndex + 1}/{history.length || 0}
         {isOnVariation ? " · var" : ""}
       </span>
@@ -425,7 +440,7 @@ function InteractiveBoardComponent({
       <NavButton label={t("board.end")} onClick={goEnd} disabled={!canGoForward}>
         <ChevronLast size={16} />
       </NavButton>
-      <div className="mx-1 h-5 w-px bg-[var(--line)]" />
+      <span className="board-divider" aria-hidden />
       <NavButton
         label={t("board.flip")}
         onClick={() =>
@@ -434,7 +449,7 @@ function InteractiveBoardComponent({
       >
         <FlipHorizontal2 size={16} />
       </NavButton>
-      {!fillContainer && (
+      {!fillContainer && !bare && (
         <NavButton label={t("board.reset")} onClick={reset}>
           <RotateCcw size={16} />
         </NavButton>
@@ -442,24 +457,95 @@ function InteractiveBoardComponent({
     </div>
   );
 
-  if (fillContainer) {
+  /* The single measured square that react-chessboard renders into. */
+  const stage = (
+    <div className="board-stage" ref={setStageEl}>
+      {stageReady ? (
+        <>
+          <Chessboard options={boardOptions} />
+          {markerOverlay}
+        </>
+      ) : (
+        <div className="board-skeleton">{t("board.loading")}</div>
+      )}
+    </div>
+  );
+
+  // Edge-to-edge: mobile sticky board. Compact size controls still available.
+  if (bare) {
     return (
-      <div
-        className={`board-fill-root ${bare ? "board-fill-root--bare" : ""}`}
-      >
-        {topBanner}
-        <div className="board-fill-stage">
-          <div
-            className={`board-fill-square board-fill-square--fluid relative ${
-              bare ? "board-fill-bare" : "board-frame board-frame-rich"
-            }`}
-          >
-            {!bare && <div className="board-bevel" aria-hidden />}
-            <div className="board-stage relative h-full w-full">
-              <Chessboard options={boardOptions} />
-              {markerOverlay}
+      <div className="board-root board-bare">
+        {!hideSizeControls && (
+          <div className="board-size-bar board-size-bar--bare">
+            <p className="eyebrow">
+              {t("studio.size")} ·{" "}
+              <span className="text-[var(--accent)]">{boardSize}</span>
+            </p>
+            <div className="flex items-center gap-1">
+              <NavButton
+                label={t("board.shrink")}
+                onClick={() => bumpSize(-1)}
+                disabled={boardSize === "sm"}
+              >
+                <Minimize2 size={16} />
+              </NavButton>
+              <NavButton
+                label={t("board.grow")}
+                onClick={() => bumpSize(1)}
+                disabled={boardSize === "xl"}
+              >
+                <Maximize2 size={16} />
+              </NavButton>
             </div>
           </div>
+        )}
+        {topBanner}
+        <div className="board-stage-wrap">{stage}</div>
+        {bottomBanner}
+        {controls}
+      </div>
+    );
+  }
+
+  // Framed board that fills the height of its parent (desktop review pane).
+  if (fillContainer) {
+    return (
+      <div className="board-root board-root--fill">
+        {!hideSizeControls && (
+          <div className="board-size-bar">
+            <p className="eyebrow">
+              {t("studio.size")} ·{" "}
+              <span className="text-[var(--accent)]">{boardSize}</span>
+            </p>
+            <div className="flex items-center gap-1">
+              <NavButton
+                label={t("board.shrink")}
+                onClick={() => bumpSize(-1)}
+                disabled={boardSize === "sm"}
+              >
+                <Minimize2 size={16} />
+              </NavButton>
+              <NavButton
+                label={t("board.grow")}
+                onClick={() => bumpSize(1)}
+                disabled={boardSize === "xl"}
+              >
+                <Maximize2 size={16} />
+              </NavButton>
+            </div>
+          </div>
+        )}
+        {topBanner}
+        <div
+          className="board-stage-wrap board-frame board-frame-rich"
+          style={{
+            width: "100%",
+            maxWidth: BOARD_SIZE_MAX[boardSize],
+            marginInline: "auto",
+          }}
+        >
+          <div className="board-bevel" aria-hidden />
+          {stage}
         </div>
         {bottomBanner}
         {controls}
@@ -468,14 +554,14 @@ function InteractiveBoardComponent({
   }
 
   return (
-    <div className="flex w-full flex-col gap-4">
+    <div className="board-root">
       {!hideSizeControls && (
-        <div className="flex items-center justify-between gap-2 px-1">
-          <p className="text-xs font-medium text-[var(--ink-muted)]">
+        <div className="board-size-bar">
+          <p className="eyebrow">
             {t("studio.size")} ·{" "}
-            <span className="uppercase text-[var(--accent)]">{boardSize}</span>
+            <span className="text-[var(--accent)]">{boardSize}</span>
           </p>
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1">
             <NavButton
               label={t("board.shrink")}
               onClick={() => bumpSize(-1)}
@@ -495,14 +581,11 @@ function InteractiveBoardComponent({
       )}
 
       <div
-        className={`board-frame board-frame-rich relative mx-auto w-full board-size-${boardSize}`}
+        className="board-stage-wrap board-frame board-frame-rich mx-auto"
         style={{ maxWidth: BOARD_SIZE_MAX[boardSize] }}
       >
         <div className="board-bevel" aria-hidden />
-        <div className="board-stage relative aspect-square w-full">
-          <Chessboard options={boardOptions} />
-          {markerOverlay}
-        </div>
+        {stage}
       </div>
 
       {controls}
@@ -515,13 +598,11 @@ function NavButton({
   onClick,
   disabled,
   label,
-  emphasize = false,
 }: {
   children: React.ReactNode;
   onClick: () => void;
   disabled?: boolean;
   label: string;
-  emphasize?: boolean;
 }) {
   return (
     <button
@@ -530,18 +611,9 @@ function NavButton({
       title={label}
       onClick={onClick}
       disabled={disabled}
-      className={`inline-flex h-11 w-11 items-center justify-center gap-1 rounded-md border transition disabled:cursor-not-allowed disabled:opacity-35 sm:h-9 sm:w-9 ${
-        emphasize
-          ? "w-auto px-2.5 border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent)] hover:bg-[var(--accent)] hover:text-[var(--on-accent)] sm:w-auto"
-          : "border-[var(--line)] bg-[var(--surface-elevated)] text-[var(--ink)] hover:border-[var(--accent)] hover:text-[var(--accent)]"
-      }`}
+      className="board-btn"
     >
       {children}
-      {emphasize && (
-        <span className="hidden text-[10px] font-bold uppercase tracking-wide sm:inline">
-          {label}
-        </span>
-      )}
     </button>
   );
 }

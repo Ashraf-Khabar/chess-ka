@@ -2,13 +2,19 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Loader2, ListOrdered, MessageSquare, Cpu } from "lucide-react";
+import { ArrowLeft, Cpu, ListOrdered, Loader2, MessageSquare } from "lucide-react";
 import InteractiveBoard from "@/features/chessboard/components/InteractiveBoard";
 import { useChessGame } from "@/features/chessboard/hooks/useChessGame";
+import AnalysisSheet, {
+  type AnalysisSheetTab,
+} from "@/features/analysis/components/AnalysisSheet";
 import EnginePanel from "@/features/analysis/components/EnginePanel";
 import MoveList from "@/features/analysis/components/MoveList";
 import MoveCoachPanel from "@/features/analysis/components/MoveCoachPanel";
-import { useStockfish } from "@/features/analysis/hooks/useStockfish";
+import {
+  formatEvaluation,
+  useStockfish,
+} from "@/features/analysis/hooks/useStockfish";
 import { useMoveClassification } from "@/features/analysis/hooks/useMoveClassification";
 import { uciToSan } from "@/features/analysis/lib/uci";
 import {
@@ -26,6 +32,7 @@ import {
   getPerspectiveColor,
   isPerspectivePly,
 } from "@/features/analysis/lib/perspective";
+import { useMediaQuery } from "@/features/components/hooks/useMediaQuery";
 import { useSettings } from "@/features/settings/context/SettingsContext";
 import type { ChessComGame } from "@/features/analysis/api/chessCom";
 
@@ -36,34 +43,16 @@ interface GameReviewPageProps {
 type ReviewTab = "moves" | "coach" | "engine";
 
 /**
- * Chess.com-like game review — full-bleed board on mobile, dual-pane on desktop.
+ * Game review — full-bleed sticky board plus sheet on mobile,
+ * dual pane on desktop. Exactly one board mounts on either layout.
  */
 export default function GameReviewPage({ gameId }: GameReviewPageProps) {
   const { t, settings } = useSettings();
+  const isDesktop = useMediaQuery("(min-width: 1024px)");
+
   const [session, setSession] = useState<ActiveGameSession | null>(null);
   const [ready, setReady] = useState(false);
   const [tab, setTab] = useState<ReviewTab>("coach");
-  const [isMobile, setIsMobile] = useState(() =>
-    typeof window !== "undefined"
-      ? window.matchMedia("(max-width: 1279px)").matches
-      : true
-  );
-
-  useEffect(() => {
-    document.body.classList.add("no-scroll", "review-active");
-    const mq = window.matchMedia("(max-width: 1279px)");
-    const sync = () => {
-      setIsMobile(mq.matches);
-      document.body.dataset.reviewLayout = mq.matches ? "mobile" : "desktop";
-    };
-    sync();
-    mq.addEventListener("change", sync);
-    return () => {
-      mq.removeEventListener("change", sync);
-      document.body.classList.remove("no-scroll", "review-active");
-      delete document.body.dataset.reviewLayout;
-    };
-  }, []);
 
   useEffect(() => {
     const active = loadActiveGame();
@@ -80,8 +69,7 @@ export default function GameReviewPage({ gameId }: GameReviewPageProps) {
   const workerPath = "/engines/stockfish-nnue-16-single.js";
 
   const perspectiveColor = useMemo(
-    () =>
-      session ? getPerspectiveColor(session.username, session.game) : null,
+    () => (session ? getPerspectiveColor(session.username, session.game) : null),
     [session]
   );
 
@@ -92,8 +80,7 @@ export default function GameReviewPage({ gameId }: GameReviewPageProps) {
   }, [game.history, game.plyIndex, perspectiveColor]);
 
   const opponentName = useMemo(
-    () =>
-      session ? getOpponentName(session.username, session.game) : null,
+    () => (session ? getOpponentName(session.username, session.game) : null),
     [session]
   );
 
@@ -112,10 +99,7 @@ export default function GameReviewPage({ gameId }: GameReviewPageProps) {
       isThinking: evaluation.isThinking,
       depth: evaluation.depth,
     },
-    {
-      depth: settings.engineDepth,
-      workerPath,
-    }
+    { depth: settings.engineDepth, workerPath }
   );
 
   const sideToMove = useMemo<"w" | "b">(
@@ -136,9 +120,7 @@ export default function GameReviewPage({ gameId }: GameReviewPageProps) {
     [classification.bestMoveUci, classification.fenBefore, isUserPly]
   );
 
-  const settledLiveBestUci = evaluation.isThinking
-    ? null
-    : evaluation.bestMove;
+  const settledLiveBestUci = evaluation.isThinking ? null : evaluation.bestMove;
 
   const accuracyHint = useMemo(() => {
     if (
@@ -152,23 +134,27 @@ export default function GameReviewPage({ gameId }: GameReviewPageProps) {
     return `${Math.max(0, Math.round(100 - loss / 3))}%`;
   }, [classification.lossCp, classification.quality, isUserPly]);
 
-  if (!ready) {
+  if (!ready || isDesktop === null) {
     return (
-      <div className="flex h-full items-center justify-center gap-2 text-[var(--ink-muted)]">
-        <Loader2 className="animate-spin" size={20} />
-        {t("review.loading")}
+      <div className="desk-loading">
+        <span className="inline-flex items-center gap-2 text-xs">
+          <Loader2 className="animate-spin" size={16} aria-hidden />
+          {t("review.loading")}
+        </span>
       </div>
     );
   }
 
   if (!session) {
     return (
-      <div className="panel-shell mx-auto mt-10 max-w-lg text-center">
-        <p className="text-sm text-[var(--ink-muted)]">{t("review.missing")}</p>
-        <Link href="/" className="btn-primary mt-4 inline-flex items-center gap-2">
-          <ArrowLeft size={16} />
-          {t("review.back")}
-        </Link>
+      <div className="page">
+        <div className="panel-shell mx-auto max-w-lg text-center">
+          <p className="text-sm text-[var(--ink-muted)]">{t("review.missing")}</p>
+          <Link href="/" className="btn-primary mt-4">
+            <ArrowLeft size={15} aria-hidden />
+            {t("review.back")}
+          </Link>
+        </div>
       </div>
     );
   }
@@ -188,22 +174,201 @@ export default function GameReviewPage({ gameId }: GameReviewPageProps) {
   const bottomColor: "w" | "b" = userIsBlack ? "b" : "w";
   const topColor: "w" | "b" = userIsBlack ? "w" : "b";
 
-  return (
-    <div className={`review-shell ${isMobile ? "review-shell--cc" : ""}`}>
-      {/* Desktop header */}
-      <header className="review-header-compact review-header-desktop">
-        <div className="flex min-w-0 flex-1 items-center gap-2">
-          <Link href="/" className="review-back-btn" aria-label={t("review.back")}>
-            <ArrowLeft size={14} />
-            <span className="review-back-label">{t("review.back")}</span>
+  const evalLabel = formatEvaluation(
+    evaluation.cp,
+    evaluation.mate,
+    sideToMove
+  );
+
+  const movesPanel = (
+    <MoveList
+      history={game.history}
+      plyIndex={game.plyIndex}
+      onSelectPly={game.goToPly}
+      mainLine={game.mainLine}
+      forkPly={game.forkPly}
+      variation={game.variation}
+      isOnVariation={game.isOnVariation}
+      onSelectMainPly={game.goToMainPly}
+      onReturnToFork={game.returnToFork}
+      currentQuality={classification.quality}
+      compact
+    />
+  );
+
+  const coachPanel = settings.showCoachPanel ? (
+    <MoveCoachPanel
+      classification={classification}
+      bestMoveSan={bestMoveSan}
+      suggestedBestSan={suggestedBestSan}
+      isUserPly={isUserPly}
+      opponentName={opponentName}
+    />
+  ) : (
+    <p className="text-sm text-[var(--ink-faint)]">{t("settings.showCoach")}</p>
+  );
+
+  const enginePanel = (
+    <EnginePanel
+      evaluation={evaluation}
+      sideToMove={sideToMove}
+      bestMoveSan={bestMoveSan}
+      classification={classification}
+      suggestedBestSan={isUserPly !== false ? suggestedBestSan : null}
+      compact
+    />
+  );
+
+  const board = (
+    <InteractiveBoard
+      game={game}
+      moveQuality={classification.quality}
+      markerPly={classification.classifiedPly}
+      isClassifying={classification.isClassifying}
+      suggestedBestUci={
+        isUserPly !== false && !classification.isClassifying
+          ? classification.bestMoveUci
+          : null
+      }
+      liveBestUci={settledLiveBestUci}
+      showLiveBestArrow
+      hideSizeControls={false}
+      fillContainer={isDesktop}
+      bare={!isDesktop}
+      initialOrientation={userIsBlack ? "black" : "white"}
+      topBanner={
+        <PlayerBar
+          player={topPlayer}
+          color={topColor}
+          active={sideToMove === topColor}
+        />
+      }
+      bottomBanner={
+        <PlayerBar
+          player={bottomPlayer}
+          color={bottomColor}
+          active={sideToMove === bottomColor}
+          highlight
+        />
+      }
+    />
+  );
+
+  if (!isDesktop) {
+    const tabs: AnalysisSheetTab[] = [
+      {
+        id: "moves",
+        label: t("review.moves"),
+        icon: <ListOrdered size={13} aria-hidden />,
+        content: movesPanel,
+      },
+      ...(settings.showCoachPanel
+        ? [
+            {
+              id: "coach",
+              label: t("coach.eyebrow"),
+              icon: <MessageSquare size={13} aria-hidden />,
+              content: coachPanel,
+            },
+          ]
+        : []),
+      {
+        id: "engine",
+        label: t("engine.title"),
+        icon: <Cpu size={13} aria-hidden />,
+        content: enginePanel,
+      },
+    ];
+
+    return (
+      <div className="review-shell">
+        <header className="review-topbar">
+          <Link
+            href="/"
+            className="review-topbar-back"
+            aria-label={t("review.back")}
+          >
+            <ArrowLeft size={18} aria-hidden />
           </Link>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-semibold text-[var(--ink)]">
+            <p className="truncate text-[0.8125rem] font-semibold text-[var(--ink)]">
+              {chessGame.white.username} vs {chessGame.black.username}
+            </p>
+            <p className="truncate text-[0.625rem] uppercase tracking-[0.14em] text-[var(--ink-faint)]">
+              {chessGame.time_class} · {resultLabel}
+            </p>
+          </div>
+          <div className="shrink-0 pr-1 text-right">
+            <p className="eyebrow">{t("review.accuracy")}</p>
+            <p className="font-display text-base leading-none text-[var(--accent)]">
+              {accuracyHint}
+            </p>
+          </div>
+        </header>
+
+        <div className="desk-mobile desk-mobile--immersive">
+          <div className="desk-board-sticky">{board}</div>
+
+          <div className="desk-strip">
+            <div className="min-w-0">
+              <p className="eyebrow">{t("review.result")}</p>
+              <h2 className="truncate">{resultLabel}</h2>
+            </div>
+            <span className="desk-strip-eval">{evalLabel}</span>
+          </div>
+
+          <div className="desk-mobile-body">
+            <dl className="grid grid-cols-2 gap-px bg-[var(--line)]">
+              <div className="stat-tile !border-0">
+                <dt>{t("review.players")}</dt>
+                <dd className="text-sm text-[var(--ink)] tabular-nums">
+                  {chessGame.white.rating}/{chessGame.black.rating}
+                </dd>
+              </div>
+              <div className="stat-tile !border-0">
+                <dt>{t("review.accuracy")}</dt>
+                <dd className="font-display text-lg text-[var(--accent)]">
+                  {accuracyHint}
+                </dd>
+              </div>
+            </dl>
+            <p className="text-[0.6875rem] text-[var(--ink-faint)]">
+              {chessGame.rated ? t("review.rated") : t("review.casual")} ·{" "}
+              <span suppressHydrationWarning>
+                {formatGameEndDate(chessGame.end_time)}
+              </span>
+            </p>
+          </div>
+
+          <AnalysisSheet
+            tabs={tabs}
+            activeTab={tab}
+            onTabChange={(id) => setTab(id as ReviewTab)}
+            peek={evalLabel}
+            immersive
+          />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="review-shell">
+      <header className="review-head">
+        <div className="flex min-w-0 flex-1 items-center gap-3">
+          <Link href="/" className="btn-ghost" aria-label={t("review.back")}>
+            <ArrowLeft size={14} aria-hidden />
+            <span>{t("review.back")}</span>
+          </Link>
+          <div className="min-w-0">
+            <p className="truncate font-display text-lg text-[var(--ink)]">
               {chessGame.white.username}
-              <span className="mx-1 font-normal text-[var(--ink-muted)]">vs</span>
+              <span className="mx-1.5 text-sm font-normal text-[var(--ink-faint)]">
+                vs
+              </span>
               {chessGame.black.username}
             </p>
-            <p className="truncate text-[11px] text-[var(--ink-muted)] capitalize">
+            <p className="truncate text-[0.625rem] uppercase tracking-[0.16em] text-[var(--ink-faint)]">
               {chessGame.time_class} ·{" "}
               {chessGame.rated ? t("review.rated") : t("review.casual")} ·{" "}
               <span suppressHydrationWarning>
@@ -213,157 +378,58 @@ export default function GameReviewPage({ gameId }: GameReviewPageProps) {
           </div>
         </div>
 
-        <div className="review-header-meta flex shrink-0 items-center gap-2 sm:gap-3">
-          <div className="review-accuracy text-right">
-            <p className="text-[10px] uppercase tracking-wide text-[var(--ink-muted)]">
-              {t("review.accuracy")}
-            </p>
-            <p className="font-display text-lg leading-none text-[var(--accent)] sm:text-xl">
+        <div className="flex shrink-0 items-start gap-5">
+          <div className="text-right">
+            <p className="eyebrow">{t("review.accuracy")}</p>
+            <p className="desk-eval-hero !text-3xl !text-[var(--accent)]">
               {accuracyHint}
             </p>
           </div>
-          <div className="rounded-md border border-[var(--line)] bg-[var(--surface-soft)] px-2 py-1 text-right sm:px-2.5 sm:py-1.5">
-            <p className="text-xs font-bold text-[var(--accent)]">{resultLabel}</p>
-            <p className="text-[10px] text-[var(--ink-muted)]">
+          <div className="text-right">
+            <p className="eyebrow">{t("review.result")}</p>
+            <p className="font-display text-lg text-[var(--ink)]">
+              {resultLabel}
+            </p>
+            <p className="text-[0.6875rem] text-[var(--ink-faint)] tabular-nums">
               {chessGame.white.rating}/{chessGame.black.rating}
             </p>
           </div>
         </div>
       </header>
 
-      {/* Chess.com-style mobile top bar */}
-      <header className="cc-topbar">
-        <Link href="/" className="cc-topbar-back" aria-label={t("review.back")}>
-          <ArrowLeft size={18} />
-        </Link>
-        <div className="cc-topbar-center min-w-0">
-          <p className="truncate text-[13px] font-semibold text-[var(--ink)]">
-            {chessGame.white.username} vs {chessGame.black.username}
-          </p>
-          <p className="truncate text-[10px] capitalize text-[var(--ink-muted)]">
-            {chessGame.time_class} · {resultLabel}
-          </p>
-        </div>
-        <div className="cc-topbar-acc">
-          <span className="text-[10px] text-[var(--ink-muted)]">
-            {t("review.accuracy")}
-          </span>
-          <strong className="text-sm text-[var(--accent)]">{accuracyHint}</strong>
-        </div>
-      </header>
+      <div className="review-desktop">
+        <section className="review-desktop-board">{board}</section>
 
-      <div className="review-grid">
-        <section className="review-board">
-          <InteractiveBoard
-            game={game}
-            moveQuality={classification.quality}
-            markerPly={classification.classifiedPly}
-            isClassifying={classification.isClassifying}
-            suggestedBestUci={
-              isUserPly !== false && !classification.isClassifying
-                ? classification.bestMoveUci
-                : null
-            }
-            liveBestUci={settledLiveBestUci}
-            showLiveBestArrow
-            fillContainer
-            hideSizeControls
-            bare={isMobile}
-            initialOrientation={userIsBlack ? "black" : "white"}
-            topBanner={
-              <PlayerBar
-                player={topPlayer}
-                color={topColor}
-                active={sideToMove === topColor}
-              />
-            }
-            bottomBanner={
-              <PlayerBar
-                player={bottomPlayer}
-                color={bottomColor}
-                active={sideToMove === bottomColor}
-                highlight
-              />
-            }
-          />
-        </section>
-
-        <aside className="review-side">
-          <div className="review-tabs">
+        <aside className="review-desktop-side">
+          <div className="review-tabs" role="tablist">
             <TabButton
               active={tab === "moves"}
               onClick={() => setTab("moves")}
-              icon={<ListOrdered size={14} />}
+              icon={<ListOrdered size={13} aria-hidden />}
               label={t("review.moves")}
             />
             {settings.showCoachPanel && (
               <TabButton
                 active={tab === "coach"}
                 onClick={() => setTab("coach")}
-                icon={<MessageSquare size={14} />}
+                icon={<MessageSquare size={13} aria-hidden />}
                 label={t("coach.eyebrow")}
               />
             )}
             <TabButton
               active={tab === "engine"}
               onClick={() => setTab("engine")}
-              icon={<Cpu size={14} />}
+              icon={<Cpu size={13} aria-hidden />}
               label={t("engine.title")}
             />
           </div>
 
-          <div className="review-tab-panel">
+          <div className="review-tab-panel" role="tabpanel">
             {tab === "moves" && (
-              <div className="review-moves-pane flex min-h-0 flex-1 flex-col">
-                <div className="min-h-0 flex-1 overflow-hidden">
-                  <MoveList
-                    history={game.history}
-                    plyIndex={game.plyIndex}
-                    onSelectPly={game.goToPly}
-                    mainLine={game.mainLine}
-                    forkPly={game.forkPly}
-                    variation={game.variation}
-                    isOnVariation={game.isOnVariation}
-                    onSelectMainPly={game.goToMainPly}
-                    onReturnToFork={game.returnToFork}
-                    currentQuality={classification.quality}
-                    compact
-                  />
-                </div>
-              </div>
+              <div className="flex h-full min-h-0 flex-col">{movesPanel}</div>
             )}
-
-            {tab === "coach" &&
-              (settings.showCoachPanel ? (
-                <div className="min-h-0 flex-1 overflow-y-auto">
-                  <MoveCoachPanel
-                    classification={classification}
-                    bestMoveSan={bestMoveSan}
-                    suggestedBestSan={suggestedBestSan}
-                    isUserPly={isUserPly}
-                    opponentName={opponentName}
-                  />
-                </div>
-              ) : (
-                <p className="p-3 text-sm text-[var(--ink-muted)]">
-                  {t("settings.showCoach")}
-                </p>
-              ))}
-
-            {tab === "engine" && (
-              <div className="min-h-0 flex-1 overflow-y-auto">
-                <EnginePanel
-                  evaluation={evaluation}
-                  sideToMove={sideToMove}
-                  bestMoveSan={bestMoveSan}
-                  classification={classification}
-                  suggestedBestSan={
-                    isUserPly !== false ? suggestedBestSan : null
-                  }
-                  compact
-                />
-              </div>
-            )}
+            {tab === "coach" && coachPanel}
+            {tab === "engine" && enginePanel}
           </div>
         </aside>
       </div>
@@ -394,12 +460,12 @@ function PlayerBar({
         }`}
         aria-hidden
       />
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-[13px] font-semibold text-[var(--ink)]">
-          {player.username}
-        </p>
-        <p className="text-[11px] text-[var(--ink-muted)]">{player.rating}</p>
-      </div>
+      <span className="min-w-0 flex-1 truncate text-[0.8125rem] font-semibold text-[var(--ink)]">
+        {player.username}
+      </span>
+      <span className="shrink-0 text-[0.6875rem] text-[var(--ink-faint)] tabular-nums">
+        {player.rating}
+      </span>
     </div>
   );
 }
@@ -418,9 +484,11 @@ function TabButton({
   return (
     <button
       type="button"
+      role="tab"
+      aria-selected={active}
       data-active={active}
       onClick={onClick}
-      className="review-tab inline-flex items-center justify-center gap-1"
+      className="review-tab"
     >
       {icon}
       <span>{label}</span>

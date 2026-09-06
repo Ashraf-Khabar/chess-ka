@@ -6,8 +6,8 @@ import { useSettings } from "@/features/settings/context/SettingsContext";
 import { APP_NAV_ITEMS } from "@/features/components/layout/navItems";
 
 /**
- * iOS/Android-style bottom tab bar — mobile core navigation only.
- * Hidden on desktop and during immersive /analyze review.
+ * Mobile tab rail — underline markers, 44px targets, safe-area aware.
+ * Hidden on desktop and during the immersive /analyze review.
  */
 export default function BottomTabBar() {
   const pathname = usePathname();
@@ -17,7 +17,7 @@ export default function BottomTabBar() {
   if (isAnalyze) return null;
 
   return (
-    <nav className="app-tabbar md:hidden" aria-label={t("nav.menu")}>
+    <nav className="app-tabbar lg:hidden" aria-label={t("nav.menu")}>
       <div className="app-tabbar-inner">
         {APP_NAV_ITEMS.map((item) => {
           const Icon = item.icon;
@@ -30,9 +30,7 @@ export default function BottomTabBar() {
               className="app-tab"
               aria-current={active ? "page" : undefined}
             >
-              <span className="app-tab-icon">
-                <Icon size={22} strokeWidth={active ? 2.25 : 1.75} />
-              </span>
+              <Icon size={19} strokeWidth={active ? 2.25 : 1.75} aria-hidden />
               <span className="app-tab-label">{t(item.labelKey)}</span>
             </Link>
           );

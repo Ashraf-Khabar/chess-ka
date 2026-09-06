@@ -6,15 +6,15 @@ export type BoardSize = "sm" | "md" | "lg" | "xl";
 export type { BoardTheme } from "@/features/chessboard/lib/boardThemes";
 export type { PieceStyle } from "@/features/chessboard/lib/pieceSets";
 
-export type AppTheme =
-  | "signal"
-  | "carbon"
-  | "harbor"
-  | "night"
-  | "emerald"
-  | "slate"
-  | "dusk"
-  | "paper";
+/**
+ * Match Desk themes.
+ * tournament — warm bone ink on black oak (default, dark)
+ * precision  — cool graphite with signal teal (dark)
+ * atelier    — bone paper with oxblood ink (light)
+ */
+export type AppTheme = "tournament" | "precision" | "atelier";
+
+export const APP_THEMES = ["tournament", "precision", "atelier"] as const;
 
 export type AnimationSpeed = "fast" | "normal" | "smooth";
 
@@ -32,14 +32,23 @@ export interface AppSettings {
   showCoachPanel: boolean;
 }
 
-export const SETTINGS_COOKIE = "cpa-settings-v5";
+export const SETTINGS_COOKIE = "cpa-settings-v7";
+
+/** Older cookie names, newest first — read once then migrated forward. */
+export const LEGACY_SETTINGS_COOKIES = [
+  "cpa-settings-v6",
+  "cpa-settings-v5",
+  "cpa-settings-v4",
+  "cpa-settings-v3",
+  "cpa-settings-v2",
+] as const;
 
 export const DEFAULT_SETTINGS: AppSettings = {
   language: "fr",
-  boardSize: "lg",
+  boardSize: "xl",
   boardTheme: "classic",
   pieceStyle: "classic",
-  appTheme: "carbon",
+  appTheme: "tournament",
   animationSpeed: "normal",
   engineDepth: 18,
   showLiveBestArrow: true,
@@ -48,10 +57,9 @@ export const DEFAULT_SETTINGS: AppSettings = {
   showCoachPanel: true,
 };
 
-export const DARK_APP_THEMES: ReadonlySet<AppTheme> = new Set([
-  "carbon",
-  "night",
-  "dusk",
+export const DARK_APP_THEMES: ReadonlySet<AppTheme> = new Set<AppTheme>([
+  "tournament",
+  "precision",
 ]);
 
 export const ANIMATION_MS: Record<AnimationSpeed, number> = {
@@ -61,34 +69,38 @@ export const ANIMATION_MS: Record<AnimationSpeed, number> = {
 };
 
 export const BOARD_SIZE_MAX: Record<BoardSize, string> = {
-  sm: "min(100%, 440px)",
-  md: "min(100%, 560px)",
-  lg: "min(100%, 700px)",
-  xl: "min(100%, min(86vh, 860px))",
+  sm: "min(100%, 480px)",
+  md: "min(100%, 620px)",
+  lg: "min(100%, 760px)",
+  xl: "min(100%, min(92vh, 960px))",
 };
 
 export const ENGINE_DEPTH_OPTIONS = [14, 16, 18, 20, 22] as const;
 
 export const GITHUB_REPO_URL =
-  process.env.NEXT_PUBLIC_GITHUB_URL ??
-  "https://github.com/khaba/chess_ka";
+  process.env.NEXT_PUBLIC_GITHUB_URL ?? "https://github.com/khaba/chess_ka";
 
+/** Every theme that ever shipped maps onto one of the three Match Desk themes. */
 const LEGACY_THEME: Record<string, AppTheme> = {
-  forest: "signal",
-  atelier: "signal",
-  signal: "signal",
-  midnight: "carbon",
-  ink: "carbon",
-  carbon: "carbon",
-  slate: "slate",
-  marble: "harbor",
-  harbor: "harbor",
-  ember: "dusk",
-  arena: "night",
-  night: "night",
-  emerald: "emerald",
-  dusk: "dusk",
-  paper: "paper",
+  tournament: "tournament",
+  precision: "precision",
+  atelier: "atelier",
+  // dark ancestors
+  carbon: "tournament",
+  midnight: "tournament",
+  ink: "tournament",
+  dusk: "tournament",
+  ember: "tournament",
+  arena: "precision",
+  night: "precision",
+  // light ancestors
+  signal: "atelier",
+  forest: "atelier",
+  paper: "atelier",
+  marble: "atelier",
+  harbor: "precision",
+  slate: "atelier",
+  emerald: "atelier",
 };
 
 const BOARD_THEME_SET = new Set<string>([
@@ -117,6 +129,11 @@ const PIECE_STYLE_SET = new Set<string>([
   "alpha",
 ]);
 
+export function normalizeAppTheme(value: string | undefined | null): AppTheme {
+  if (!value) return DEFAULT_SETTINGS.appTheme;
+  return LEGACY_THEME[value] ?? DEFAULT_SETTINGS.appTheme;
+}
+
 export function parseSettings(raw: string | null): AppSettings {
   if (!raw) return { ...DEFAULT_SETTINGS };
   try {
@@ -138,8 +155,7 @@ export function parseSettings(raw: string | null): AppSettings {
       showMoveMarkers:
         parsed.showMoveMarkers ?? DEFAULT_SETTINGS.showMoveMarkers,
       showCoachPanel: parsed.showCoachPanel ?? DEFAULT_SETTINGS.showCoachPanel,
-      appTheme:
-        LEGACY_THEME[parsed.appTheme ?? ""] ?? DEFAULT_SETTINGS.appTheme,
+      appTheme: normalizeAppTheme(parsed.appTheme),
       boardTheme: BOARD_THEME_SET.has(parsed.boardTheme ?? "")
         ? (parsed.boardTheme as BoardTheme)
         : DEFAULT_SETTINGS.boardTheme,
@@ -166,7 +182,7 @@ export function applyDocumentSettings(settings: AppSettings): void {
   const root = document.documentElement;
   root.lang = settings.language;
   root.dataset.appTheme = settings.appTheme;
-  root.dataset.font = "desk";
+  root.dataset.boardSize = settings.boardSize;
   const scheme = DARK_APP_THEMES.has(settings.appTheme) ? "dark" : "light";
   root.dataset.colorScheme = scheme;
   root.style.colorScheme = scheme;

@@ -134,16 +134,16 @@ export default function MoveCoachPanel({
   const showQualityBadge = quality != null && classification.playedSan;
 
   return (
-    <section className="panel-shell coach-panel coach-panel-v2">
+    <section className="panel-shell coach-panel">
       <header className="coach-header">
         <div className="min-w-0">
           <p className="eyebrow">{t("coach.eyebrow")}</p>
-          <h2 className="font-display text-xl text-[var(--ink)] sm:text-2xl">
+          <h2 className="font-display text-xl text-[var(--ink)]">
             {t("coach.title")}
           </h2>
         </div>
         <span className="coach-header-icon" aria-hidden>
-          <Sparkles size={18} />
+          <Sparkles size={15} />
         </span>
       </header>
 
@@ -157,7 +157,7 @@ export default function MoveCoachPanel({
             draggable={false}
           />
           <div className="min-w-0">
-            <p className="font-mono text-lg font-bold text-[var(--ink)]">
+            <p className="font-mono text-base font-bold text-[var(--ink)]">
               {classification.playedSan}
             </p>
             <span className={`quality-badge quality-${quality}`}>
@@ -203,10 +203,16 @@ export default function MoveCoachPanel({
 
       {showCorrection && (
         <div className="coach-card coach-card-fix">
-          <ArrowRight size={18} className="shrink-0 text-red-400" />
+          <ArrowRight
+            size={16}
+            className="shrink-0 text-[var(--eval-blunder)]"
+            aria-hidden
+          />
           <div className="min-w-0">
-            <p className="coach-card-label text-red-400">{t("coach.playThis")}</p>
-            <p className="font-mono text-xl font-bold text-[var(--ink)]">
+            <p className="coach-card-label !text-[var(--eval-blunder)]">
+              {t("coach.playThis")}
+            </p>
+            <p className="font-mono text-lg font-bold text-[var(--ink)]">
               {correctionLabel}
             </p>
           </div>
@@ -227,10 +233,12 @@ export default function MoveCoachPanel({
         bestMoveSan &&
         !classification.playedSan && (
           <div className="coach-card coach-card-best">
-            <p className="coach-card-label">{t("coach.bestNow")}</p>
-            <p className="font-mono text-xl font-bold text-[var(--accent)]">
-              {bestMoveSan}
-            </p>
+            <div className="min-w-0">
+              <p className="coach-card-label">{t("coach.bestNow")}</p>
+              <p className="font-mono text-lg font-bold text-[var(--accent)]">
+                {bestMoveSan}
+              </p>
+            </div>
           </div>
         )}
     </section>

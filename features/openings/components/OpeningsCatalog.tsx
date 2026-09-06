@@ -1,13 +1,20 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { BookOpen, Play } from "lucide-react";
+import { Cpu, ListOrdered, MessageSquare, Library } from "lucide-react";
 import { Chess } from "chess.js";
 import InteractiveBoard from "@/features/chessboard/components/InteractiveBoard";
 import { useChessGame } from "@/features/chessboard/hooks/useChessGame";
+import AnalysisSheet, {
+  type AnalysisSheetTab,
+} from "@/features/analysis/components/AnalysisSheet";
+import EnginePanel from "@/features/analysis/components/EnginePanel";
 import MoveList from "@/features/analysis/components/MoveList";
 import MoveCoachPanel from "@/features/analysis/components/MoveCoachPanel";
-import { useStockfish } from "@/features/analysis/hooks/useStockfish";
+import {
+  formatEvaluation,
+  useStockfish,
+} from "@/features/analysis/hooks/useStockfish";
 import { useMoveClassification } from "@/features/analysis/hooks/useMoveClassification";
 import { uciToSan } from "@/features/analysis/lib/uci";
 import {
@@ -15,7 +22,10 @@ import {
   matchOpening,
   type OpeningLine,
 } from "@/features/openings/lib/openingBook";
+import { useMediaQuery } from "@/features/components/hooks/useMediaQuery";
 import { useSettings } from "@/features/settings/context/SettingsContext";
+
+type CatalogTab = "moves" | "coach" | "engine" | "library";
 
 function openingToPgn(line: OpeningLine): string {
   const game = new Chess();
@@ -29,11 +39,16 @@ function openingToPgn(line: OpeningLine): string {
 }
 
 /**
- * Openings catalog: pick a line, explore on the board with book + quality symbols.
+ * Openings catalog — pick a line, walk it on the board with book + quality marks.
+ * Same desk shape as the analysis home: sticky board + sheet, or three columns.
  */
 export default function OpeningsCatalog() {
   const { settings, t } = useSettings();
+  const isDesktop = useMediaQuery("(min-width: 1024px)");
+
   const [selectedId, setSelectedId] = useState(OPENING_LINES[0]?.id ?? "");
+  const [tab, setTab] = useState<CatalogTab>("library");
+
   const selected =
     OPENING_LINES.find((line) => line.id === selectedId) ?? OPENING_LINES[0];
 
@@ -63,6 +78,11 @@ export default function OpeningsCatalog() {
     { depth: settings.engineDepth, workerPath }
   );
 
+  const sideToMove = useMemo<"w" | "b">(
+    () => (game.fen.includes(" w ") ? "w" : "b"),
+    [game.fen]
+  );
+
   const bestMoveSan = useMemo(
     () => uciToSan(game.fen, evaluation.bestMove),
     [evaluation.bestMove, game.fen]
@@ -76,118 +96,220 @@ export default function OpeningsCatalog() {
     [classification.bestMoveUci, classification.fenBefore]
   );
 
-  const settledLiveBestUci = evaluation.isThinking
-    ? null
-    : evaluation.bestMove;
+  const settledLiveBestUci = evaluation.isThinking ? null : evaluation.bestMove;
 
   const matched = matchOpening(game.history, game.plyIndex);
   const openingName =
     settings.language === "fr"
-      ? matched?.nameFr ?? selected?.nameFr
-      : matched?.nameEn ?? selected?.nameEn;
+      ? (matched?.nameFr ?? selected?.nameFr)
+      : (matched?.nameEn ?? selected?.nameEn);
 
-  const loadOpening = (line: OpeningLine) => {
-    setSelectedId(line.id);
-  };
+  const evalLabel = formatEvaluation(
+    evaluation.cp,
+    evaluation.mate,
+    sideToMove
+  );
+
+  const board = (
+    <InteractiveBoard
+      game={game}
+      moveQuality={classification.quality}
+      markerPly={classification.classifiedPly}
+      isClassifying={classification.isClassifying}
+      suggestedBestUci={
+        classification.isClassifying ? null : classification.bestMoveUci
+      }
+      liveBestUci={settledLiveBestUci}
+      showLiveBestArrow
+      bare={isDesktop === false}
+      hideSizeControls={false}
+    />
+  );
+
+  const moveList = (
+    <MoveList
+      history={game.history}
+      plyIndex={game.plyIndex}
+      onSelectPly={game.goToPly}
+      mainLine={game.mainLine}
+      forkPly={game.forkPly}
+      variation={game.variation}
+      isOnVariation={game.isOnVariation}
+      onSelectMainPly={game.goToMainPly}
+      onReturnToFork={game.returnToFork}
+      currentQuality={classification.quality}
+    />
+  );
+
+  const coachPanel = (
+    <MoveCoachPanel
+      classification={classification}
+      bestMoveSan={bestMoveSan}
+      suggestedBestSan={suggestedBestSan}
+    />
+  );
+
+  const enginePanel = (
+    <EnginePanel
+      evaluation={evaluation}
+      sideToMove={sideToMove}
+      bestMoveSan={bestMoveSan}
+      classification={classification}
+      suggestedBestSan={suggestedBestSan}
+    />
+  );
+
+  const lineList = (
+    <div className="library-panel">
+      <header className="library-head">
+        <div className="min-w-0">
+          <p className="eyebrow">{t("openings.eyebrow")}</p>
+          <h2 className="font-display text-lg text-[var(--ink)]">
+            {t("openings.title")}
+          </h2>
+        </div>
+        <span className="chip">{OPENING_LINES.length}</span>
+      </header>
+      <div className="library-list">
+        {OPENING_LINES.map((line) => {
+          const active = line.id === selectedId;
+          const label = settings.language === "fr" ? line.nameFr : line.nameEn;
+          return (
+            <button
+              key={line.id}
+              type="button"
+              onClick={() => setSelectedId(line.id)}
+              data-active={active ? "true" : "false"}
+              className="list-row"
+            >
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-[0.8125rem] font-semibold text-[var(--ink)]">
+                  {label}
+                </span>
+                <span className="text-[0.6875rem] text-[var(--ink-faint)]">
+                  {line.eco} · {line.uciMoves.length} {t("openings.plies")}
+                </span>
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+
+  if (isDesktop === null) {
+    return (
+      <div className="desk-loading">
+        <div className="desk-loading-board" aria-hidden />
+      </div>
+    );
+  }
+
+  if (!isDesktop) {
+    const tabs: AnalysisSheetTab[] = [
+      {
+        id: "library",
+        label: t("openings.eyebrow"),
+        icon: <Library size={13} aria-hidden />,
+        content: lineList,
+      },
+      {
+        id: "moves",
+        label: t("review.moves"),
+        icon: <ListOrdered size={13} aria-hidden />,
+        content: moveList,
+      },
+      ...(settings.showCoachPanel
+        ? [
+            {
+              id: "coach",
+              label: t("coach.eyebrow"),
+              icon: <MessageSquare size={13} aria-hidden />,
+              content: coachPanel,
+            },
+          ]
+        : []),
+      {
+        id: "engine",
+        label: t("engine.title"),
+        icon: <Cpu size={13} aria-hidden />,
+        content: enginePanel,
+      },
+    ];
+
+    return (
+      <div className="desk-mobile">
+        <div className="desk-board-sticky">{board}</div>
+
+        <div className="desk-strip">
+          <div className="min-w-0">
+            <p className="eyebrow">{t("openings.eyebrow")}</p>
+            <h1 className="truncate">{openingName}</h1>
+          </div>
+          <span className="desk-strip-eval">{evalLabel}</span>
+        </div>
+
+        <div className="desk-mobile-body">
+          <div className="flex flex-wrap items-center gap-2">
+            {matched && (
+              <span className="chip chip--accent">{t("openings.book")}</span>
+            )}
+            {selected && <span className="chip">{selected.eco}</span>}
+          </div>
+          <p className="text-xs leading-relaxed text-[var(--ink-faint)]">
+            {t("openings.hint")}
+          </p>
+        </div>
+
+        <AnalysisSheet
+          tabs={tabs}
+          activeTab={tab}
+          onTabChange={(id) => setTab(id as CatalogTab)}
+          peek={evalLabel}
+        />
+      </div>
+    );
+  }
 
   return (
-    <div className="studio-grid-3">
-      <section className="panel-shell fade-rise">
-        <p className="eyebrow">{t("openings.eyebrow")}</p>
-        <h1 className="font-display text-2xl text-[var(--ink)]">
-          {t("openings.title")}
-        </h1>
-        <p className="mt-2 text-sm text-[var(--ink-muted)]">
-          {t("openings.hint")}
-        </p>
-
-        <ul className="mt-4 flex max-h-[70vh] flex-col gap-1.5 overflow-y-auto pr-1">
-          {OPENING_LINES.map((line) => {
-            const active = line.id === selectedId;
-            const label =
-              settings.language === "fr" ? line.nameFr : line.nameEn;
-            return (
-              <li key={line.id}>
-                <button
-                  type="button"
-                  onClick={() => loadOpening(line)}
-                  className={`flex w-full items-center justify-between gap-2 rounded-lg border px-3 py-2.5 text-left transition ${
-                    active
-                      ? "border-[var(--accent)] bg-[var(--accent-soft)]"
-                      : "border-[var(--line)] bg-[var(--surface-soft)] hover:border-[var(--accent)]/50"
-                  }`}
-                >
-                  <span>
-                    <span className="block text-sm font-semibold text-[var(--ink)]">
-                      {label}
-                    </span>
-                    <span className="text-[11px] text-[var(--ink-muted)]">
-                      {line.eco} · {line.uciMoves.length}{" "}
-                      {t("openings.plies")}
-                    </span>
-                  </span>
-                  <Play
-                    size={14}
-                    className={
-                      active ? "text-[var(--accent)]" : "text-[var(--ink-muted)]"
-                    }
-                  />
-                </button>
-              </li>
-            );
-          })}
-        </ul>
+    <div className="desk-desktop">
+      <section className="desk-rail" aria-label={t("openings.title")}>
+        {lineList}
+        <div className="rail-block">
+          <p className="text-xs leading-relaxed text-[var(--ink-faint)]">
+            {t("openings.hint")}
+          </p>
+        </div>
       </section>
 
-      <section className="studio-main fade-rise">
-        <div className="mb-3 flex flex-wrap items-center gap-2">
-          <BookOpen size={16} className="text-[var(--accent)]" />
-          <h2 className="font-display text-xl text-[var(--ink)]">
-            {openingName}
-          </h2>
-          {matched && (
-            <span className="rounded-md border border-[var(--accent)]/40 bg-[var(--accent-soft)] px-2 py-0.5 text-[11px] font-semibold text-[var(--accent)]">
-              {t("openings.book")}
-            </span>
-          )}
-        </div>
-
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_220px] lg:items-start">
-          <InteractiveBoard
-            game={game}
-            moveQuality={classification.quality}
-            markerPly={classification.classifiedPly}
-            isClassifying={classification.isClassifying}
-            suggestedBestUci={
-              classification.isClassifying ? null : classification.bestMoveUci
-            }
-            liveBestUci={settledLiveBestUci}
-            showLiveBestArrow
-          />
-          <div className="flex flex-col gap-3">
-            <p className="eyebrow">{t("studio.moves")}</p>
-            <MoveList
-              history={game.history}
-              plyIndex={game.plyIndex}
-              onSelectPly={game.goToPly}
-              mainLine={game.mainLine}
-              forkPly={game.forkPly}
-              variation={game.variation}
-              isOnVariation={game.isOnVariation}
-              onSelectMainPly={game.goToMainPly}
-              onReturnToFork={game.returnToFork}
-              currentQuality={classification.quality}
-            />
+      <section className="desk-stage fade-rise">
+        <div className="desk-masthead">
+          <p className="eyebrow">{t("openings.eyebrow")}</p>
+          <h1>{openingName}</h1>
+          <div className="desk-masthead-meta">
+            {matched && (
+              <span className="chip chip--accent">{t("openings.book")}</span>
+            )}
+            {selected && <span className="chip">{selected.eco}</span>}
           </div>
         </div>
+
+        <div className="desk-board">{board}</div>
       </section>
 
-      <section className="fade-rise fade-rise-delay">
-        <MoveCoachPanel
-          classification={classification}
-          bestMoveSan={bestMoveSan}
-          suggestedBestSan={suggestedBestSan}
-        />
+      <section
+        className="desk-rail desk-rail--right"
+        aria-label={t("engine.title")}
+      >
+        <div className="rail-block">
+          <div className="rail-head">
+            <p className="eyebrow">{t("engine.eval")}</p>
+            <span className="desk-eval-hero !text-2xl">{evalLabel}</span>
+          </div>
+          {moveList}
+        </div>
+        {settings.showCoachPanel && coachPanel}
+        {enginePanel}
       </section>
     </div>
   );

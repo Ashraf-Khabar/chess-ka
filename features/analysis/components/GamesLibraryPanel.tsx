@@ -1,17 +1,14 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Loader2, Library, ArrowUpRight } from "lucide-react";
+import { Loader2, ArrowUpRight } from "lucide-react";
 import type { ChessComGame } from "@/features/analysis/api/chessCom";
 import {
   formatGameEndDate,
   getGameResultLabel,
 } from "@/features/analysis/api/chessCom";
 import { useSettings } from "@/features/settings/context/SettingsContext";
-import {
-  getGameId,
-  saveActiveGame,
-} from "@/features/analysis/lib/gameSession";
+import { getGameId, saveActiveGame } from "@/features/analysis/lib/gameSession";
 
 interface GamesLibraryPanelProps {
   username: string;
@@ -22,7 +19,8 @@ interface GamesLibraryPanelProps {
 }
 
 /**
- * Persistent Chess.com game library — opens a dedicated review page per game.
+ * Chess.com game library. Height is owned by the container (rail or sheet),
+ * so the list scrolls inside whatever surface it is dropped into.
  */
 export default function GamesLibraryPanel({
   username,
@@ -40,114 +38,100 @@ export default function GamesLibraryPanel({
   };
 
   return (
-    <aside className="panel-shell flex max-h-[min(48vh,420px)] flex-col md:max-h-[min(80vh,820px)]">
-      <header className="mb-3 flex items-start justify-between gap-2 border-b border-[var(--line)] pb-3">
-        <div>
+    <section className="library-panel" aria-label={t("library.title")}>
+      <header className="library-head">
+        <div className="min-w-0">
           <p className="eyebrow">{t("library.eyebrow")}</p>
-          <h2 className="font-display text-xl text-[var(--ink)]">
+          <h2 className="font-display text-lg text-[var(--ink)]">
             {t("library.title")}
           </h2>
-          {username ? (
-            <p className="mt-0.5 text-xs text-[var(--ink-muted)]">@{username}</p>
-          ) : (
-            <p className="mt-0.5 text-xs text-[var(--ink-muted)]">
-              {t("library.enterUser")}
-            </p>
-          )}
         </div>
-        <Library size={18} className="text-[var(--accent)]" />
+        {username && <span className="chip shrink-0">@{username}</span>}
       </header>
 
-      <div className="min-h-0 flex-1 overflow-y-auto pr-1">
+      <div className="library-list">
         {isLoading && (
-          <div className="flex flex-col items-center gap-2 py-12 text-[var(--ink-muted)]">
-            <Loader2 className="animate-spin" size={22} />
-            <p className="text-sm">{t("library.loading")}</p>
+          <div className="flex flex-col items-center gap-2 py-10 text-[var(--ink-faint)]">
+            <Loader2 className="animate-spin" size={20} aria-hidden />
+            <p className="text-xs">{t("library.loading")}</p>
           </div>
         )}
 
         {!isLoading && error && (
-          <p className="py-8 text-center text-sm text-red-400">{error}</p>
+          <p className="px-3 py-8 text-center text-sm text-[var(--eval-blunder)]">
+            {error}
+          </p>
         )}
 
         {!isLoading && !error && games.length === 0 && (
-          <p className="py-10 text-center text-sm text-[var(--ink-muted)]">
+          <p className="px-3 py-10 text-center text-xs leading-relaxed text-[var(--ink-faint)]">
             {t("library.emptyHint")}
           </p>
         )}
 
-        {!isLoading && !error && games.length > 0 && (
-          <ul className="space-y-1.5">
-            {games.map((gameItem) => {
-              const active = activeGameUrl === gameItem.url;
-              const result = getGameResultLabel(gameItem, username);
+        {!isLoading &&
+          !error &&
+          games.map((gameItem) => {
+            const active = activeGameUrl === gameItem.url;
+            const result = getGameResultLabel(gameItem, username);
+            const resultTone =
+              result === "Won"
+                ? "text-[var(--eval-best)]"
+                : result === "Lost"
+                  ? "text-[var(--eval-blunder)]"
+                  : "text-[var(--ink-muted)]";
 
-              return (
-                <li key={gameItem.uuid ?? gameItem.url}>
-                  <button
-                    type="button"
-                    onClick={() => openReview(gameItem)}
-                    className={`group w-full rounded-xl border px-3 py-2.5 text-left transition ${
-                      active
-                        ? "border-[var(--accent)] bg-[var(--accent-soft)]"
-                        : "border-[var(--line)] bg-[var(--surface-soft)] hover:border-[var(--accent)]/50 hover:bg-[var(--surface-elevated)]"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="truncate text-sm font-semibold text-[var(--ink)]">
-                        {gameItem.white.username}{" "}
-                        <span className="font-normal text-[var(--ink-muted)]">
-                          vs
-                        </span>{" "}
-                        {gameItem.black.username}
-                      </span>
-                      <span className="inline-flex shrink-0 items-center gap-1 text-[var(--accent)] opacity-80 group-hover:opacity-100">
-                        <span className="text-[10px] font-bold uppercase">
-                          {t("library.analyze")}
-                        </span>
-                        <ArrowUpRight size={14} />
-                      </span>
-                    </div>
-                    <div className="mt-1 flex flex-wrap items-center gap-x-2 text-[11px] text-[var(--ink-muted)]">
-                      <span
-                        className={`font-bold ${
-                          result === "Won"
-                            ? "text-emerald-400"
-                            : result === "Lost"
-                              ? "text-red-400"
-                              : ""
-                        }`}
-                      >
-                        {result === "Won"
-                          ? t("library.win")
-                          : result === "Lost"
-                            ? t("library.loss")
-                            : t("library.draw")}
-                      </span>
-                      <span>·</span>
-                      <span className="capitalize">{gameItem.time_class}</span>
-                      <span>·</span>
-                      <span>
-                        {gameItem.white.rating}/{gameItem.black.rating}
-                      </span>
-                      <span>·</span>
-                      <span suppressHydrationWarning>
-                        {formatGameEndDate(gameItem.end_time)}
-                      </span>
-                    </div>
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-        )}
+            return (
+              <button
+                key={gameItem.uuid ?? gameItem.url}
+                type="button"
+                onClick={() => openReview(gameItem)}
+                data-active={active ? "true" : "false"}
+                className="list-row group"
+              >
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-[0.8125rem] font-semibold text-[var(--ink)]">
+                    {gameItem.white.username}
+                    <span className="mx-1 font-normal text-[var(--ink-faint)]">
+                      vs
+                    </span>
+                    {gameItem.black.username}
+                  </span>
+                  <span className="mt-1 flex flex-wrap items-center gap-x-2 text-[0.6875rem] text-[var(--ink-faint)]">
+                    <span className={`font-bold uppercase ${resultTone}`}>
+                      {result === "Won"
+                        ? t("library.win")
+                        : result === "Lost"
+                          ? t("library.loss")
+                          : t("library.draw")}
+                    </span>
+                    <span aria-hidden>·</span>
+                    <span className="capitalize">{gameItem.time_class}</span>
+                    <span aria-hidden>·</span>
+                    <span className="tabular-nums">
+                      {gameItem.white.rating}/{gameItem.black.rating}
+                    </span>
+                    <span aria-hidden>·</span>
+                    <span suppressHydrationWarning>
+                      {formatGameEndDate(gameItem.end_time)}
+                    </span>
+                  </span>
+                </span>
+                <ArrowUpRight
+                  size={15}
+                  aria-hidden
+                  className="shrink-0 text-[var(--ink-faint)] group-hover:text-[var(--accent)]"
+                />
+              </button>
+            );
+          })}
       </div>
 
       {games.length > 0 && (
-        <p className="mt-3 border-t border-[var(--line)] pt-3 text-[11px] text-[var(--ink-muted)]">
+        <p className="library-foot">
           {t("library.loadedCount", { count: games.length })}
         </p>
       )}
-    </aside>
+    </section>
   );
 }

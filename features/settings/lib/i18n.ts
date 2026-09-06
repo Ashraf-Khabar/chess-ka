@@ -137,30 +137,15 @@ const fr = {
     "Couleurs de l’interface (clair ou sombre). Indépendant de l’échiquier.",
   "settings.mode.light": "Clair",
   "settings.mode.dark": "Sombre",
-  "settings.appTheme.signal": "Signal",
-  "settings.appTheme.signal.desc":
-    "Rouge vif sur fond clair — look match desk.",
-  "settings.appTheme.paper": "Papier",
-  "settings.appTheme.paper.desc":
-    "Bleu papier et blanc — lecture confortable.",
-  "settings.appTheme.emerald": "Émeraude",
-  "settings.appTheme.emerald.desc":
-    "Vert frais, ambiance salle de club.",
-  "settings.appTheme.slate": "Ardoise",
-  "settings.appTheme.slate.desc":
-    "Gris clair avec accent orange.",
-  "settings.appTheme.harbor": "Port",
-  "settings.appTheme.harbor.desc":
-    "Cyan profond, atmosphère maritime.",
-  "settings.appTheme.carbon": "Carbone",
-  "settings.appTheme.carbon.desc":
-    "Sombre charbon, accents rouges.",
-  "settings.appTheme.night": "Nuit",
-  "settings.appTheme.night.desc":
-    "Noir profond, accents menthe.",
-  "settings.appTheme.dusk": "Crépuscule",
-  "settings.appTheme.dusk.desc":
-    "Sombre chaud avec corail.",
+  "settings.appTheme.tournament": "Tournoi",
+  "settings.appTheme.tournament.desc":
+    "Chêne noir, encre ivoire, accents laiton.",
+  "settings.appTheme.precision": "Précision",
+  "settings.appTheme.precision.desc":
+    "Graphite froid, signalétique turquoise.",
+  "settings.appTheme.atelier": "Atelier",
+  "settings.appTheme.atelier.desc":
+    "Papier ivoire, encre sang de bœuf.",
   "settings.engineDepth": "Profondeur Stockfish",
   "settings.engineDepth.hint":
     "Plus élevé = plus précis (et plus lent). 18–22 proche d’une analyse Chess.com.",
@@ -190,6 +175,16 @@ const fr = {
   "review.hint":
     "Parcourez chaque coup : pastilles, flèches et feedback comme sur Chess.com.",
   "review.loading": "Chargement de la partie…",
+  "review.players": "Joueurs",
+  "review.result": "Résultat",
+
+  "desk.eyebrow": "Match desk",
+  "desk.board": "Échiquier",
+  "desk.play": "Partie libre",
+  "sheet.title": "Panneau d’analyse",
+  "sheet.expand": "Agrandir le panneau",
+  "sheet.collapse": "Réduire le panneau",
+  "board.loading": "Préparation de l’échiquier…",
 } as const;
 
 type DictKey = keyof typeof fr;
@@ -331,30 +326,15 @@ const en: Record<DictKey, string> = {
     "Interface colors (light or dark). Independent of the board.",
   "settings.mode.light": "Light",
   "settings.mode.dark": "Dark",
-  "settings.appTheme.signal": "Signal",
-  "settings.appTheme.signal.desc":
-    "Bright red on light — match desk look.",
-  "settings.appTheme.paper": "Paper",
-  "settings.appTheme.paper.desc":
-    "Paper blue and white — easy reading.",
-  "settings.appTheme.emerald": "Emerald",
-  "settings.appTheme.emerald.desc":
-    "Fresh green, club-room vibe.",
-  "settings.appTheme.slate": "Slate",
-  "settings.appTheme.slate.desc":
-    "Light gray with orange accent.",
-  "settings.appTheme.harbor": "Harbor",
-  "settings.appTheme.harbor.desc":
-    "Deep cyan, maritime feel.",
-  "settings.appTheme.carbon": "Carbon",
-  "settings.appTheme.carbon.desc":
-    "Charcoal dark with red accents.",
-  "settings.appTheme.night": "Night",
-  "settings.appTheme.night.desc":
-    "Deep black with mint accents.",
-  "settings.appTheme.dusk": "Dusk",
-  "settings.appTheme.dusk.desc":
-    "Warm dark with coral.",
+  "settings.appTheme.tournament": "Tournament",
+  "settings.appTheme.tournament.desc":
+    "Black oak, ivory ink, brass accents.",
+  "settings.appTheme.precision": "Precision",
+  "settings.appTheme.precision.desc":
+    "Cool graphite with signal teal.",
+  "settings.appTheme.atelier": "Atelier",
+  "settings.appTheme.atelier.desc":
+    "Bone paper with oxblood ink.",
   "settings.engineDepth": "Stockfish depth",
   "settings.engineDepth.hint":
     "Higher = more accurate (and slower). 18–22 is close to Chess.com-style analysis.",
@@ -383,6 +363,16 @@ const en: Record<DictKey, string> = {
   "review.hint":
     "Step through each move: badges, arrows, and feedback like Chess.com.",
   "review.loading": "Loading game…",
+  "review.players": "Players",
+  "review.result": "Result",
+
+  "desk.eyebrow": "Match desk",
+  "desk.board": "Board",
+  "desk.play": "Free play",
+  "sheet.title": "Analysis desk",
+  "sheet.expand": "Expand panel",
+  "sheet.collapse": "Collapse panel",
+  "board.loading": "Preparing board…",
 };
 
 const dictionaries: Record<AppLanguage, Record<DictKey, string>> = {

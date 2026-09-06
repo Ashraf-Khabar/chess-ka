@@ -90,8 +90,8 @@ export default function MoveList({
     <div
       className={
         compact
-          ? "flex h-full max-h-full flex-col overflow-hidden rounded-lg border border-[var(--line)] bg-[var(--surface-soft)]"
-          : "max-h-56 overflow-hidden rounded-lg border border-[var(--line)] bg-[var(--surface-soft)]"
+          ? "flex h-full max-h-full flex-col overflow-hidden border border-[var(--line)] bg-[var(--surface-soft)]"
+          : "flex max-h-64 flex-col overflow-hidden border border-[var(--line)] bg-[var(--surface-soft)]"
       }
     >
       {isOnVariation && onReturnToFork && (
@@ -107,7 +107,7 @@ export default function MoveList({
           <button
             type="button"
             onClick={onReturnToFork}
-            className="shrink-0 rounded-md border border-[var(--accent)] bg-[var(--accent-soft)] px-2.5 py-1.5 text-[11px] font-bold text-[var(--accent)] transition hover:bg-[var(--accent)] hover:text-[var(--on-accent)]"
+            className="variation-return-btn"
           >
             {t("moves.backToGame")}
           </button>
@@ -277,8 +277,8 @@ function PlyButton({
     <button
       type="button"
       onClick={onClick}
-      className={`inline-flex items-center justify-between gap-1 rounded text-left font-medium transition ${
-        compact ? "px-1.5 py-0.5 text-xs" : "w-full px-2 py-1"
+      className={`inline-flex items-center justify-between gap-1 text-left font-medium transition ${
+        compact ? "px-1.5 py-1 text-xs" : "w-full px-2 py-1.5"
       } ${
         active
           ? "bg-[var(--accent)] text-[var(--on-accent)]"

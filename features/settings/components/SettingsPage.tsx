@@ -1,19 +1,21 @@
 "use client";
 
 import Link from "next/link";
+import type { ReactNode } from "react";
 import {
+  ArrowRightLeft,
+  Crown,
+  Gauge,
   Languages,
+  Palette,
   RotateCcw,
   Sparkles,
   Square,
-  ArrowRightLeft,
-  Palette,
-  Gauge,
-  LayoutGrid,
-  Crown,
 } from "lucide-react";
 import { useSettings } from "@/features/settings/context/SettingsContext";
 import {
+  APP_THEMES,
+  DARK_APP_THEMES,
   ENGINE_DEPTH_OPTIONS,
   GITHUB_REPO_URL,
   type AnimationSpeed,
@@ -28,48 +30,43 @@ import { PIECE_STYLE_OPTIONS } from "@/features/chessboard/lib/pieceSets";
 import GitHubIcon from "@/features/components/icons/GitHubIcon";
 import type { TranslationKey } from "@/features/settings/lib/i18n";
 
-const APP_THEME_CARDS: {
-  value: AppTheme;
-  swatch: string;
-  mode: "light" | "dark";
-}[] = [
-  { value: "signal", swatch: "#c62828", mode: "light" },
-  { value: "paper", swatch: "#2563eb", mode: "light" },
-  { value: "emerald", swatch: "#0f8a5a", mode: "light" },
-  { value: "slate", swatch: "#e67e22", mode: "light" },
-  { value: "harbor", swatch: "#0e7490", mode: "light" },
-  { value: "carbon", swatch: "#ef5350", mode: "dark" },
-  { value: "night", swatch: "#34d399", mode: "dark" },
-  { value: "dusk", swatch: "#ff7a59", mode: "dark" },
-];
+/** Two-tone swatch per theme: page ground + accent. */
+const THEME_SWATCH: Record<AppTheme, [string, string]> = {
+  tournament: ["#0d0c0a", "#c8974f"],
+  precision: ["#090b0f", "#3fd0bd"],
+  atelier: ["#ebe5da", "#8e2020"],
+};
 
 export default function SettingsPage() {
   const { settings, updateSettings, resetSettings, t, hydrated } = useSettings();
 
   if (!hydrated) {
     return (
-      <div className="panel-shell mx-auto max-w-4xl p-8 text-sm text-[var(--ink-muted)]">
-        …
+      <div className="page">
+        <div className="panel-shell text-sm text-[var(--ink-faint)]">…</div>
       </div>
     );
   }
 
   return (
-    <div className="relative z-10 mx-auto flex max-w-4xl flex-col gap-5 fade-rise">
-      <header className="panel-shell">
+    <div className="page fade-rise flex flex-col gap-4">
+      <header>
         <p className="eyebrow">{t("settings.eyebrow")}</p>
-        <h1 className="font-display text-3xl text-[var(--ink)]">
+        <h1 className="font-display text-3xl text-[var(--ink)] sm:text-4xl">
           {t("settings.title")}
         </h1>
-        <p className="mt-2 text-sm text-[var(--accent)]">{t("settings.saved")}</p>
+        <p className="mt-2 text-xs uppercase tracking-[0.16em] text-[var(--accent)]">
+          {t("settings.saved")}
+        </p>
       </header>
 
-      <section className="panel-shell space-y-5">
-        <h2 className="font-display text-xl text-[var(--ink)]">
-          {t("settings.section.general")}
-        </h2>
+      <section className="settings-section">
+        <header>
+          <h2>{t("settings.section.general")}</h2>
+          <span className="eyebrow">01</span>
+        </header>
 
-        <SettingBlock icon={<Languages size={16} />} title={t("settings.language")}>
+        <Row icon={<Languages size={15} />} title={t("settings.language")}>
           <Segmented
             value={settings.language}
             options={[
@@ -80,66 +77,66 @@ export default function SettingsPage() {
               updateSettings({ language: language as AppLanguage })
             }
           />
-        </SettingBlock>
+        </Row>
 
-        <SettingBlock icon={<Palette size={16} />} title={t("settings.appTheme")}>
-          <p className="mb-2 text-xs text-[var(--ink-muted)]">
-            {t("settings.appTheme.hint")}
-          </p>
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-            {APP_THEME_CARDS.map((theme) => {
-              const active = settings.appTheme === theme.value;
+        <Row
+          icon={<Palette size={15} />}
+          title={t("settings.appTheme")}
+          hint={t("settings.appTheme.hint")}
+        >
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+            {APP_THEMES.map((theme) => {
+              const active = settings.appTheme === theme;
+              const [ground, accent] = THEME_SWATCH[theme];
               return (
                 <button
-                  key={theme.value}
+                  key={theme}
                   type="button"
-                  onClick={() => updateSettings({ appTheme: theme.value })}
-                  className={`flex items-start gap-3 rounded-lg border px-3 py-3 text-left transition ${
-                    active
-                      ? "border-[var(--accent)] bg-[var(--accent-soft)]"
-                      : "border-[var(--line)] bg-[var(--surface-soft)] hover:border-[var(--accent)]/50"
-                  }`}
+                  data-active={active ? "true" : "false"}
+                  onClick={() => updateSettings({ appTheme: theme })}
+                  className="pick-card"
                 >
-                  <span
-                    className="mt-0.5 h-8 w-8 shrink-0 rounded-md border border-black/15"
-                    style={{ backgroundColor: theme.swatch }}
-                  />
+                  <span className="pick-swatch" aria-hidden>
+                    <span style={{ backgroundColor: ground }} />
+                    <span style={{ backgroundColor: accent }} />
+                    <span style={{ backgroundColor: accent, opacity: 0.35 }} />
+                    <span style={{ backgroundColor: ground }} />
+                  </span>
                   <span className="min-w-0">
-                    <span className="flex items-center gap-2">
+                    <span className="flex flex-wrap items-center gap-1.5">
                       <span
-                        className={`text-sm font-semibold ${
-                          active ? "text-[var(--accent)]" : "text-[var(--ink)]"
+                        className={`text-sm font-bold ${
+                          active
+                            ? "text-[var(--accent)]"
+                            : "text-[var(--ink)]"
                         }`}
                       >
-                        {t(
-                          `settings.appTheme.${theme.value}` as TranslationKey
-                        )}
+                        {t(`settings.appTheme.${theme}` as TranslationKey)}
                       </span>
-                      <span className="rounded border border-[var(--line)] px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-[var(--ink-muted)]">
-                        {theme.mode === "light"
-                          ? t("settings.mode.light")
-                          : t("settings.mode.dark")}
+                      <span className="chip">
+                        {DARK_APP_THEMES.has(theme)
+                          ? t("settings.mode.dark")
+                          : t("settings.mode.light")}
                       </span>
                     </span>
-                    <span className="mt-1 block text-xs leading-snug text-[var(--ink-muted)]">
-                      {t(
-                        `settings.appTheme.${theme.value}.desc` as TranslationKey
-                      )}
+                    <span className="mt-1 block text-[0.6875rem] leading-snug text-[var(--ink-faint)]">
+                      {t(`settings.appTheme.${theme}.desc` as TranslationKey)}
                     </span>
                   </span>
                 </button>
               );
             })}
           </div>
-        </SettingBlock>
+        </Row>
       </section>
 
-      <section className="panel-shell space-y-5">
-        <h2 className="font-display text-xl text-[var(--ink)]">
-          {t("settings.section.board")}
-        </h2>
+      <section className="settings-section">
+        <header>
+          <h2>{t("settings.section.board")}</h2>
+          <span className="eyebrow">02</span>
+        </header>
 
-        <SettingBlock icon={<Square size={16} />} title={t("settings.boardSize")}>
+        <Row icon={<Square size={15} />} title={t("settings.boardSize")}>
           <Segmented
             value={settings.boardSize}
             options={[
@@ -152,29 +149,30 @@ export default function SettingsPage() {
               updateSettings({ boardSize: boardSize as BoardSize })
             }
           />
-        </SettingBlock>
+        </Row>
 
-        <SettingBlock icon={<Sparkles size={16} />} title={t("settings.boardTheme")}>
-          <p className="mb-2 text-xs text-[var(--ink-muted)]">
-            {t("settings.boardTheme.hint")}
-          </p>
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+        <Row
+          icon={<Sparkles size={15} />}
+          title={t("settings.boardTheme")}
+          hint={t("settings.boardTheme.hint")}
+        >
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             {BOARD_THEME_OPTIONS.map((option) => {
               const active = settings.boardTheme === option.value;
               return (
                 <button
                   key={option.value}
                   type="button"
+                  data-active={active ? "true" : "false"}
                   onClick={() =>
                     updateSettings({ boardTheme: option.value as BoardTheme })
                   }
-                  className={`rounded-lg border px-2.5 py-2 text-left transition ${
-                    active
-                      ? "border-[var(--accent)] bg-[var(--accent-soft)]"
-                      : "border-[var(--line)] bg-[var(--surface-soft)] hover:border-[var(--accent)]/40"
-                  }`}
+                  className="pick-card !flex-col !gap-2"
                 >
-                  <span className="mb-1.5 flex h-7 overflow-hidden rounded border border-black/10">
+                  <span
+                    className="flex h-7 w-full border border-black/15"
+                    aria-hidden
+                  >
                     <span
                       className="w-1/2"
                       style={{ backgroundColor: option.swatchLight }}
@@ -185,7 +183,7 @@ export default function SettingsPage() {
                     />
                   </span>
                   <span
-                    className={`text-xs font-semibold ${
+                    className={`text-xs font-bold ${
                       active ? "text-[var(--accent)]" : "text-[var(--ink)]"
                     }`}
                   >
@@ -195,40 +193,38 @@ export default function SettingsPage() {
               );
             })}
           </div>
-        </SettingBlock>
+        </Row>
 
-        <SettingBlock icon={<Crown size={16} />} title={t("settings.pieceStyle")}>
-          <p className="mb-2 text-xs text-[var(--ink-muted)]">
-            {t("settings.pieceStyle.hint")}
-          </p>
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+        <Row
+          icon={<Crown size={15} />}
+          title={t("settings.pieceStyle")}
+          hint={t("settings.pieceStyle.hint")}
+        >
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
             {PIECE_STYLE_OPTIONS.map((option) => {
               const active = settings.pieceStyle === option.value;
               return (
                 <button
                   key={option.value}
                   type="button"
+                  data-active={active ? "true" : "false"}
                   onClick={() =>
                     updateSettings({ pieceStyle: option.value as PieceStyle })
                   }
-                  className={`flex items-center gap-2 rounded-lg border px-3 py-2.5 text-left transition ${
-                    active
-                      ? "border-[var(--accent)] bg-[var(--accent-soft)]"
-                      : "border-[var(--line)] bg-[var(--surface-soft)] hover:border-[var(--accent)]/40"
-                  }`}
+                  className="pick-card"
                 >
-                  <span className="font-serif text-xl text-[var(--ink)]">
+                  <span className="font-serif text-2xl leading-none text-[var(--ink)]">
                     {option.preview}
                   </span>
                   <span className="min-w-0">
                     <span
-                      className={`block text-sm font-semibold ${
+                      className={`block text-sm font-bold ${
                         active ? "text-[var(--accent)]" : "text-[var(--ink)]"
                       }`}
                     >
                       {t(`settings.piece.${option.value}` as TranslationKey)}
                     </span>
-                    <span className="block text-[11px] text-[var(--ink-muted)]">
+                    <span className="block text-[0.6875rem] text-[var(--ink-faint)]">
                       {t(
                         `settings.piece.${option.value}.desc` as TranslationKey
                       )}
@@ -238,12 +234,9 @@ export default function SettingsPage() {
               );
             })}
           </div>
-        </SettingBlock>
+        </Row>
 
-        <SettingBlock
-          icon={<ArrowRightLeft size={16} />}
-          title={t("settings.animation")}
-        >
+        <Row icon={<ArrowRightLeft size={15} />} title={t("settings.animation")}>
           <Segmented
             value={settings.animationSpeed}
             options={[
@@ -257,34 +250,36 @@ export default function SettingsPage() {
               })
             }
           />
-        </SettingBlock>
+        </Row>
 
-        <ToggleRow
+        <Toggle
           label={t("settings.liveArrow")}
           checked={settings.showLiveBestArrow}
           onChange={(showLiveBestArrow) => updateSettings({ showLiveBestArrow })}
         />
-        <ToggleRow
+        <Toggle
           label={t("settings.notation")}
           checked={settings.showNotation}
           onChange={(showNotation) => updateSettings({ showNotation })}
         />
-        <ToggleRow
+        <Toggle
           label={t("settings.markers")}
           checked={settings.showMoveMarkers}
           onChange={(showMoveMarkers) => updateSettings({ showMoveMarkers })}
         />
       </section>
 
-      <section className="panel-shell space-y-5">
-        <h2 className="font-display text-xl text-[var(--ink)]">
-          {t("settings.section.analysis")}
-        </h2>
+      <section className="settings-section">
+        <header>
+          <h2>{t("settings.section.analysis")}</h2>
+          <span className="eyebrow">03</span>
+        </header>
 
-        <SettingBlock icon={<Gauge size={16} />} title={t("settings.engineDepth")}>
-          <p className="mb-2 text-xs text-[var(--ink-muted)]">
-            {t("settings.engineDepth.hint")}
-          </p>
+        <Row
+          icon={<Gauge size={15} />}
+          title={t("settings.engineDepth")}
+          hint={t("settings.engineDepth.hint")}
+        >
           <Segmented
             value={String(settings.engineDepth)}
             options={ENGINE_DEPTH_OPTIONS.map((depth) => ({
@@ -295,67 +290,72 @@ export default function SettingsPage() {
               updateSettings({ engineDepth: Number.parseInt(depth, 10) })
             }
           />
-        </SettingBlock>
+        </Row>
 
-        <ToggleRow
+        <Toggle
           label={t("settings.showCoach")}
           checked={settings.showCoachPanel}
           onChange={(showCoachPanel) => updateSettings({ showCoachPanel })}
         />
 
-        <div className="rounded-lg border border-[var(--line)] bg-[var(--surface-soft)] p-3 text-xs text-[var(--ink-muted)]">
-          <p className="inline-flex items-center gap-1.5 font-semibold text-[var(--ink)]">
-            <LayoutGrid size={14} className="text-[var(--accent)]" />
+        <div className="settings-row flex flex-col gap-3">
+          <p className="text-[0.6875rem] leading-relaxed text-[var(--ink-faint)]">
             {t("settings.previewHint")}
           </p>
+          <button type="button" onClick={resetSettings} className="btn-ghost">
+            <RotateCcw size={14} aria-hidden />
+            {t("settings.reset")}
+          </button>
         </div>
-
-        <button
-          type="button"
-          onClick={resetSettings}
-          className="btn-ghost inline-flex items-center gap-2 px-3 py-2 text-sm"
-        >
-          <RotateCcw size={14} />
-          {t("settings.reset")}
-        </button>
       </section>
 
-      <section className="panel-shell">
-        <p className="eyebrow">{t("settings.support")}</p>
-        <h2 className="font-display text-xl text-[var(--ink)]">GitHub</h2>
-        <p className="mt-2 text-sm leading-relaxed text-[var(--ink-muted)]">
-          {t("settings.supportBody")}
-        </p>
-        <Link
-          href={GITHUB_REPO_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="btn-primary mt-4 inline-flex items-center gap-2"
-        >
-          <GitHubIcon size={16} />
-          {t("settings.openGithub")}
-        </Link>
+      <section className="settings-section">
+        <header>
+          <h2>{t("settings.support")}</h2>
+          <span className="eyebrow">04</span>
+        </header>
+        <div className="settings-row flex flex-col gap-3">
+          <p className="text-sm leading-relaxed text-[var(--ink-muted)]">
+            {t("settings.supportBody")}
+          </p>
+          <Link
+            href={GITHUB_REPO_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn-primary self-start"
+          >
+            <GitHubIcon size={15} />
+            {t("settings.openGithub")}
+          </Link>
+        </div>
       </section>
     </div>
   );
 }
 
-function SettingBlock({
+function Row({
   icon,
   title,
+  hint,
   children,
 }: {
-  icon: React.ReactNode;
+  icon: ReactNode;
   title: string;
-  children: React.ReactNode;
+  hint?: string;
+  children: ReactNode;
 }) {
   return (
-    <div className="space-y-2 border-b border-[var(--line)] pb-4 last:border-0">
-      <p className="inline-flex items-center gap-2 text-sm font-semibold text-[var(--ink)]">
+    <div className="settings-row">
+      <p className="settings-row-head">
         <span className="text-[var(--accent)]">{icon}</span>
         {title}
       </p>
-      {children}
+      {hint && (
+        <p className="mt-1 mb-3 text-[0.6875rem] leading-snug text-[var(--ink-faint)]">
+          {hint}
+        </p>
+      )}
+      <div className={hint ? "" : "mt-3"}>{children}</div>
     </div>
   );
 }
@@ -370,29 +370,23 @@ function Segmented({
   onChange: (value: string) => void;
 }) {
   return (
-    <div className="relative z-10 flex flex-wrap gap-1.5">
-      {options.map((option) => {
-        const active = option.value === value;
-        return (
-          <button
-            key={option.value}
-            type="button"
-            onClick={() => onChange(option.value)}
-            className={`rounded-md border px-3 py-1.5 text-sm font-medium transition ${
-              active
-                ? "border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent)]"
-                : "border-[var(--line)] bg-[var(--surface-soft)] text-[var(--ink-muted)] hover:text-[var(--ink)]"
-            }`}
-          >
-            {option.label}
-          </button>
-        );
-      })}
+    <div className="seg">
+      {options.map((option) => (
+        <button
+          key={option.value}
+          type="button"
+          data-active={option.value === value ? "true" : "false"}
+          onClick={() => onChange(option.value)}
+          className="seg-item"
+        >
+          {option.label}
+        </button>
+      ))}
     </div>
   );
 }
 
-function ToggleRow({
+function Toggle({
   label,
   checked,
   onChange,
@@ -402,24 +396,17 @@ function ToggleRow({
   onChange: (value: boolean) => void;
 }) {
   return (
-    <div className="relative z-10 flex items-center justify-between gap-4 border-b border-[var(--line)] py-3 last:border-0">
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      onClick={() => onChange(!checked)}
+      className="settings-toggle"
+    >
       <span className="text-sm text-[var(--ink)]">{label}</span>
-      <button
-        type="button"
-        role="switch"
-        aria-checked={checked}
-        aria-label={label}
-        onClick={() => onChange(!checked)}
-        className={`relative h-6 w-11 shrink-0 rounded-full transition ${
-          checked ? "bg-[var(--accent)]" : "bg-[var(--line)]"
-        }`}
-      >
-        <span
-          className={`pointer-events-none absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-[var(--surface-elevated)] shadow-sm transition ${
-            checked ? "translate-x-5" : ""
-          }`}
-        />
-      </button>
-    </div>
+      <span className="switch" data-checked={checked ? "true" : "false"} aria-hidden>
+        <span className="switch-knob" />
+      </span>
+    </button>
   );
 }

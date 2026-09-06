@@ -1,22 +1,32 @@
 "use client";
 
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
-import { Search, UploadCloud, Gauge, ListOrdered, MessageSquare, Cpu } from "lucide-react";
+import {
+  Cpu,
+  Library,
+  ListOrdered,
+  MessageSquare,
+  Search,
+} from "lucide-react";
 import InteractiveBoard from "@/features/chessboard/components/InteractiveBoard";
 import { useChessGame } from "@/features/chessboard/hooks/useChessGame";
+import AnalysisSheet, {
+  type AnalysisSheetTab,
+} from "@/features/analysis/components/AnalysisSheet";
 import EnginePanel from "@/features/analysis/components/EnginePanel";
 import MoveList from "@/features/analysis/components/MoveList";
 import MoveCoachPanel from "@/features/analysis/components/MoveCoachPanel";
 import GamesLibraryPanel from "@/features/analysis/components/GamesLibraryPanel";
-import { useStockfish } from "@/features/analysis/hooks/useStockfish";
+import {
+  formatEvaluation,
+  useStockfish,
+} from "@/features/analysis/hooks/useStockfish";
 import { useMoveClassification } from "@/features/analysis/hooks/useMoveClassification";
 import { uciToSan } from "@/features/analysis/lib/uci";
 import type { ChessComGame } from "@/features/analysis/api/chessCom";
+import { useMediaQuery } from "@/features/components/hooks/useMediaQuery";
 import { useSettings } from "@/features/settings/context/SettingsContext";
-import {
-  loadLibrary,
-  saveLibrary,
-} from "@/features/analysis/lib/gameSession";
+import { loadLibrary, saveLibrary } from "@/features/analysis/lib/gameSession";
 
 interface GamesApiResponse {
   games: ChessComGame[];
@@ -24,22 +34,23 @@ interface GamesApiResponse {
   error?: string;
 }
 
-type HomeTab = "moves" | "coach" | "engine";
+type DeskTab = "moves" | "coach" | "engine" | "library";
 
 /**
- * Home studio: fetch Chess.com games (library) + free-play analysis board.
+ * Home desk: Chess.com library + free-play analysis board.
+ * Mobile — sticky board with a snap sheet. Desktop — three-column match desk.
  * Detailed per-game review opens on /analyze/[gameId].
  */
 export default function DashboardAnalysis() {
   const { settings, t } = useSettings();
+  const isDesktop = useMediaQuery("(min-width: 1024px)");
+
   const [username, setUsername] = useState("");
   const [fetchedUsername, setFetchedUsername] = useState("");
   const [games, setGames] = useState<ChessComGame[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [homeTab, setHomeTab] = useState<HomeTab>(
-    settings.showCoachPanel ? "coach" : "moves"
-  );
+  const [tab, setTab] = useState<DeskTab>("coach");
 
   useEffect(() => {
     const library = loadLibrary();
@@ -89,9 +100,7 @@ export default function DashboardAnalysis() {
     [classification.bestMoveUci, classification.fenBefore]
   );
 
-  const settledLiveBestUci = evaluation.isThinking
-    ? null
-    : evaluation.bestMove;
+  const settledLiveBestUci = evaluation.isThinking ? null : evaluation.bestMove;
 
   const handleFetchGames = useCallback(
     async (event: FormEvent<HTMLFormElement>) => {
@@ -129,13 +138,33 @@ export default function DashboardAnalysis() {
     [settings.language, username]
   );
 
-  const boardSize = settings.boardSize;
-
   const accuracyHint = useMemo(() => {
     if (!classification.quality || classification.lossCp === null) return "—";
     const loss = Math.max(0, classification.lossCp);
     return `${Math.max(0, Math.round(100 - loss / 3))}%`;
   }, [classification.lossCp, classification.quality]);
+
+  const evalLabel = formatEvaluation(
+    evaluation.cp,
+    evaluation.mate,
+    sideToMove
+  );
+
+  const board = (
+    <InteractiveBoard
+      game={game}
+      moveQuality={classification.quality}
+      markerPly={classification.classifiedPly}
+      isClassifying={classification.isClassifying}
+      suggestedBestUci={
+        classification.isClassifying ? null : classification.bestMoveUci
+      }
+      liveBestUci={settledLiveBestUci}
+      showLiveBestArrow
+      bare={isDesktop === false}
+      hideSizeControls={false}
+    />
+  );
 
   const moveList = (
     <MoveList
@@ -170,180 +199,184 @@ export default function DashboardAnalysis() {
     />
   );
 
-  return (
-    <div
-      className={`studio-grid-3 ${
-        boardSize === "xl"
-          ? "board-focus-xl"
-          : boardSize === "lg"
-            ? "board-focus-lg"
-            : ""
-      }`}
-    >
-      <section className="fade-rise studio-side">
-        <GamesLibraryPanel
-          username={fetchedUsername}
-          games={games}
-          isLoading={isLoading}
-          error={error}
-        />
+  const fetchForm = (
+    <form onSubmit={handleFetchGames} className="flex flex-col gap-2">
+      <label className="eyebrow" htmlFor="cpa-username">
+        {t("studio.username")}
+      </label>
+      <input
+        id="cpa-username"
+        type="text"
+        value={username}
+        onChange={(event) => setUsername(event.target.value)}
+        placeholder="magnuscarlsen"
+        className="field-input"
+        autoComplete="username"
+        autoCapitalize="none"
+        spellCheck={false}
+      />
+      <button type="submit" disabled={isLoading} className="btn-primary">
+        <Search size={15} aria-hidden />
+        <span suppressHydrationWarning>
+          {isLoading ? t("studio.fetching") : t("studio.fetch")}
+        </span>
+      </button>
+    </form>
+  );
 
-        <div className="panel-shell mt-4 studio-session-card">
-          <p className="eyebrow" suppressHydrationWarning>
-            {t("session.eyebrow")}
-          </p>
-          <h3 className="font-display text-lg text-[var(--ink)]" suppressHydrationWarning>
-            {t("session.title")}
-          </h3>
-          <dl className="mt-3 grid grid-cols-2 gap-3 text-sm">
-            <div className="stat-tile">
-              <dt className="text-[var(--ink-muted)]" suppressHydrationWarning>
-                {t("session.games")}
-              </dt>
-              <dd className="font-display text-2xl text-[var(--ink)]">
-                {games.length}
-              </dd>
-            </div>
-            <div className="stat-tile">
-              <dt className="text-[var(--ink-muted)]" suppressHydrationWarning>
-                {t("session.plies")}
-              </dt>
-              <dd className="font-display text-2xl text-[var(--ink)]">
-                {game.history.length}
-              </dd>
-            </div>
-            <div className="stat-tile col-span-2">
-              <dt className="flex items-center gap-1.5 text-[var(--ink-muted)]">
-                <Gauge size={12} aria-hidden />
-                <span suppressHydrationWarning>{t("session.quality")}</span>
-              </dt>
-              <dd className="font-display text-2xl text-[var(--accent)]">
-                {accuracyHint}
-              </dd>
-            </div>
-          </dl>
-        </div>
-      </section>
+  const libraryPanel = (
+    <GamesLibraryPanel
+      username={fetchedUsername}
+      games={games}
+      isLoading={isLoading}
+      error={error}
+    />
+  );
 
-      <section className="studio-main fade-rise">
-        <div className="toolbar-shell">
-          <div>
+  const sessionStats = (
+    <dl className="grid grid-cols-3 gap-px bg-[var(--line)]">
+      <div className="stat-tile !border-0">
+        <dt suppressHydrationWarning>{t("session.games")}</dt>
+        <dd className="font-display text-xl text-[var(--ink)]">
+          {games.length}
+        </dd>
+      </div>
+      <div className="stat-tile !border-0">
+        <dt suppressHydrationWarning>{t("session.plies")}</dt>
+        <dd className="font-display text-xl text-[var(--ink)]">
+          {game.history.length}
+        </dd>
+      </div>
+      <div className="stat-tile !border-0">
+        <dt suppressHydrationWarning>{t("session.quality")}</dt>
+        <dd className="font-display text-xl text-[var(--accent)]">
+          {accuracyHint}
+        </dd>
+      </div>
+    </dl>
+  );
+
+  // Gate the layout until the media query has resolved so the board mounts once.
+  if (isDesktop === null) {
+    return (
+      <div className="desk-loading">
+        <div className="desk-loading-board" aria-hidden />
+      </div>
+    );
+  }
+
+  if (!isDesktop) {
+    const tabs: AnalysisSheetTab[] = [
+      {
+        id: "moves",
+        label: t("review.moves"),
+        icon: <ListOrdered size={13} aria-hidden />,
+        content: moveList,
+      },
+      ...(settings.showCoachPanel
+        ? [
+            {
+              id: "coach",
+              label: t("coach.eyebrow"),
+              icon: <MessageSquare size={13} aria-hidden />,
+              content: coachPanel,
+            },
+          ]
+        : []),
+      {
+        id: "engine",
+        label: t("engine.title"),
+        icon: <Cpu size={13} aria-hidden />,
+        content: enginePanel,
+      },
+      {
+        id: "library",
+        label: t("library.eyebrow"),
+        icon: <Library size={13} aria-hidden />,
+        content: (
+          <div className="flex flex-col gap-4">
+            {fetchForm}
+            {libraryPanel}
+          </div>
+        ),
+      },
+    ];
+
+    return (
+      <div className="desk-mobile">
+        <div className="desk-board-sticky">{board}</div>
+
+        <div className="desk-strip">
+          <div className="min-w-0">
             <p className="eyebrow" suppressHydrationWarning>
               {t("studio.eyebrow")}
             </p>
-            <h1
-              className="font-display text-2xl text-[var(--ink)] sm:text-3xl"
-              suppressHydrationWarning
-            >
+            <h1 className="truncate" suppressHydrationWarning>
               {t("studio.title")}
             </h1>
           </div>
-
-          <form
-            onSubmit={handleFetchGames}
-            className="flex w-full flex-col gap-2 sm:max-w-xl sm:flex-row sm:items-center"
-          >
-            <input
-              type="text"
-              value={username}
-              onChange={(event) => setUsername(event.target.value)}
-              placeholder={t("studio.username")}
-              className="field-input flex-1"
-              autoComplete="username"
-              aria-label={t("studio.username")}
-            />
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="btn-primary inline-flex items-center justify-center gap-2"
-            >
-              <Search size={16} />
-              <span suppressHydrationWarning>
-                {isLoading ? t("studio.fetching") : t("studio.fetch")}
-              </span>
-            </button>
-          </form>
-
-          <button
-            type="button"
-            className="btn-ghost inline-flex items-center gap-2"
-          >
-            <UploadCloud size={16} />
-            <span suppressHydrationWarning>{t("studio.importPgn")}</span>
-          </button>
+          <span className="desk-strip-eval">{evalLabel}</span>
         </div>
 
-        <p className="text-sm text-[var(--ink-muted)]" suppressHydrationWarning>
-          {t("library.openReview")}
-        </p>
+        <div className="desk-mobile-body">
+          {sessionStats}
+          <p className="text-xs leading-relaxed text-[var(--ink-faint)]">
+            {t("library.openReview")}
+          </p>
+        </div>
 
-        <div className="studio-board-stack">
-          <InteractiveBoard
-            game={game}
-            moveQuality={classification.quality}
-            markerPly={classification.classifiedPly}
-            isClassifying={classification.isClassifying}
-            suggestedBestUci={
-              classification.isClassifying ? null : classification.bestMoveUci
-            }
-            liveBestUci={settledLiveBestUci}
-            showLiveBestArrow
-          />
+        <AnalysisSheet
+          tabs={tabs}
+          activeTab={tab}
+          onTabChange={(id) => setTab(id as DeskTab)}
+          peek={evalLabel}
+        />
+      </div>
+    );
+  }
 
-          {/* Mobile: Coups / Coach / Engine dock under the board */}
-          <div className="studio-mobile-dock lg:hidden">
-            <div className="review-tabs studio-home-tabs">
-              <button
-                type="button"
-                data-active={homeTab === "moves"}
-                onClick={() => setHomeTab("moves")}
-                className="review-tab"
-              >
-                <ListOrdered size={14} />
-                <span>{t("review.moves")}</span>
-              </button>
-              {settings.showCoachPanel && (
-                <button
-                  type="button"
-                  data-active={homeTab === "coach"}
-                  onClick={() => setHomeTab("coach")}
-                  className="review-tab"
-                >
-                  <MessageSquare size={14} />
-                  <span>{t("coach.eyebrow")}</span>
-                </button>
-              )}
-              <button
-                type="button"
-                data-active={homeTab === "engine"}
-                onClick={() => setHomeTab("engine")}
-                className="review-tab"
-              >
-                <Cpu size={14} />
-                <span>{t("engine.title")}</span>
-              </button>
-            </div>
-            <div className="studio-mobile-dock-panel">
-              {homeTab === "moves" && moveList}
-              {homeTab === "coach" && settings.showCoachPanel && coachPanel}
-              {homeTab === "engine" && enginePanel}
-            </div>
-          </div>
-
-          {/* Desktop move list beside/under board */}
-          <div className="studio-desktop-moves hidden lg:flex lg:flex-col lg:gap-3">
-            <p className="eyebrow" suppressHydrationWarning>
-              {t("studio.moves")}
-            </p>
-            {moveList}
-          </div>
+  return (
+    <div className="desk-desktop">
+      <section className="desk-rail" aria-label={t("library.title")}>
+        <div className="rail-block">{fetchForm}</div>
+        {libraryPanel}
+        <div className="rail-block">
+          <p className="eyebrow mb-2" suppressHydrationWarning>
+            {t("session.eyebrow")}
+          </p>
+          {sessionStats}
         </div>
       </section>
 
-      {/* Desktop / large screens: coach + engine as side column content;
-          on mobile these stay reachable via tabs; this block is last when scrolled */}
-      <section className="studio-insights fade-rise fade-rise-delay hidden flex-col gap-4 lg:flex">
-        {coachPanel}
+      <section className="desk-stage fade-rise">
+        <div className="desk-masthead">
+          <p className="eyebrow" suppressHydrationWarning>
+            {t("studio.eyebrow")}
+          </p>
+          <h1 suppressHydrationWarning>{t("studio.title")}</h1>
+          <div className="desk-masthead-meta">
+            <span className="chip chip--accent">{t("desk.play")}</span>
+            <span className="text-xs text-[var(--ink-faint)]">
+              {t("library.openReview")}
+            </span>
+          </div>
+        </div>
+
+        <div className="desk-board">{board}</div>
+      </section>
+
+      <section
+        className="desk-rail desk-rail--right"
+        aria-label={t("engine.title")}
+      >
+        <div className="rail-block">
+          <div className="rail-head">
+            <p className="eyebrow">{t("engine.eval")}</p>
+            <span className="desk-eval-hero !text-2xl">{evalLabel}</span>
+          </div>
+          {moveList}
+        </div>
+        {settings.showCoachPanel && coachPanel}
         {enginePanel}
       </section>
     </div>
