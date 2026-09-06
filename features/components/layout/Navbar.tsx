@@ -10,15 +10,18 @@ import GitHubIcon from "@/features/components/icons/GitHubIcon";
 export default function Navbar() {
   const pathname = usePathname();
   const { t, settings, updateSettings } = useSettings();
+  const isAnalyze = Boolean(pathname?.startsWith("/analyze"));
 
   return (
-    <nav className="app-nav sticky top-0 z-40">
+    <nav
+      className={`app-nav sticky top-0 z-40 ${isAnalyze ? "app-nav--analyze" : ""}`}
+    >
       <div className="app-nav-inner">
         <Link href="/" className="app-brand group">
           <span className="app-brand-mark" aria-hidden>
             CPA
           </span>
-          <span className="font-display text-[1.35rem] leading-none tracking-tight sm:text-[1.55rem]">
+          <span className="app-brand-text font-display text-[1.35rem] leading-none tracking-tight sm:text-[1.55rem]">
             <span className="text-[var(--ink)]">Chess</span>{" "}
             <span className="text-[var(--accent)] transition group-hover:brightness-110">
               Pro
@@ -75,9 +78,18 @@ export default function Navbar() {
 
         <div className="flex items-center gap-1 md:hidden">
           <Link
+            href="/"
+            className="app-nav-icon"
+            aria-label={t("nav.analysis")}
+            data-active={pathname === "/" ? "true" : "false"}
+          >
+            <Activity size={18} />
+          </Link>
+          <Link
             href="/catalog"
             className="app-nav-icon"
             aria-label={t("nav.openings")}
+            data-active={pathname?.startsWith("/catalog") ? "true" : "false"}
           >
             <BookOpen size={18} />
           </Link>
@@ -85,18 +97,23 @@ export default function Navbar() {
             href="/settings"
             className="app-nav-icon"
             aria-label={t("nav.settings")}
+            data-active={pathname?.startsWith("/settings") ? "true" : "false"}
           >
             <Settings size={18} />
           </Link>
-          <Link
-            href={GITHUB_REPO_URL}
-            target="_blank"
-            rel="noopener noreferrer"
+          <button
+            type="button"
+            onClick={() =>
+              updateSettings({
+                language: settings.language === "fr" ? "en" : "fr",
+              })
+            }
             className="app-nav-icon"
-            aria-label={t("nav.support")}
+            aria-label={t("settings.language")}
+            title={t("settings.language")}
           >
-            <GitHubIcon size={18} />
-          </Link>
+            <Languages size={17} />
+          </button>
         </div>
       </div>
     </nav>

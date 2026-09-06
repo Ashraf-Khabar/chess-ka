@@ -7,6 +7,7 @@ import {
   useMemo,
   useState,
   type CSSProperties,
+  type ReactNode,
 } from "react";
 import {
   Chessboard,
@@ -71,6 +72,12 @@ interface InteractiveBoardProps {
   hideSizeControls?: boolean;
   /** Whose side starts at the bottom (review: analyzing player). */
   initialOrientation?: "white" | "black";
+  /** Edge-to-edge board (Chess.com mobile). */
+  bare?: boolean;
+  /** Content above the board (e.g. opponent bar). */
+  topBanner?: ReactNode;
+  /** Content between board and controls (e.g. player bar). */
+  bottomBanner?: ReactNode;
 }
 
 function InteractiveBoardComponent({
@@ -84,6 +91,9 @@ function InteractiveBoardComponent({
   fillContainer = false,
   hideSizeControls = false,
   initialOrientation = "white",
+  bare = false,
+  topBanner = null,
+  bottomBanner = null,
 }: InteractiveBoardProps) {
   const { settings, updateSettings, t } = useSettings();
   const {
@@ -332,9 +342,9 @@ function InteractiveBoardComponent({
     boardStyle: {
       width: "100%",
       height: "100%",
-      borderRadius: "6px",
+      borderRadius: bare ? "0" : "6px",
       overflow: "hidden",
-      boxShadow: "inset 0 0 0 1px rgba(0,0,0,.25)",
+      boxShadow: bare ? "none" : "inset 0 0 0 1px rgba(0,0,0,.25)",
     },
     arrowOptions: {
       colors: {
@@ -376,7 +386,11 @@ function InteractiveBoardComponent({
     ) : null;
 
   const controls = (
-    <div className="board-controls flex flex-wrap items-center justify-center gap-1.5">
+    <div
+      className={`board-controls flex flex-wrap items-center justify-center gap-1.5 ${
+        bare ? "board-controls--bare" : ""
+      }`}
+    >
       {isOnVariation && (
         <>
           <button
@@ -397,7 +411,7 @@ function InteractiveBoardComponent({
       <NavButton label={t("board.back")} onClick={goBack} disabled={!canGoBack}>
         <ChevronLeft size={16} />
       </NavButton>
-      <span className="min-w-[4rem] text-center font-mono text-[11px] text-[var(--ink-muted)]">
+      <span className="board-ply-counter min-w-[4rem] text-center font-mono text-[11px] text-[var(--ink-muted)]">
         {plyIndex + 1}/{history.length || 0}
         {isOnVariation ? " · var" : ""}
       </span>
@@ -430,16 +444,24 @@ function InteractiveBoardComponent({
 
   if (fillContainer) {
     return (
-      <div className="board-fill-root">
+      <div
+        className={`board-fill-root ${bare ? "board-fill-root--bare" : ""}`}
+      >
+        {topBanner}
         <div className="board-fill-stage">
-          <div className="board-fill-square board-frame board-frame-rich relative">
-            <div className="board-bevel" aria-hidden />
+          <div
+            className={`board-fill-square board-fill-square--fluid relative ${
+              bare ? "board-fill-bare" : "board-frame board-frame-rich"
+            }`}
+          >
+            {!bare && <div className="board-bevel" aria-hidden />}
             <div className="board-stage relative h-full w-full">
               <Chessboard options={boardOptions} />
               {markerOverlay}
             </div>
           </div>
         </div>
+        {bottomBanner}
         {controls}
       </div>
     );
@@ -508,10 +530,10 @@ function NavButton({
       title={label}
       onClick={onClick}
       disabled={disabled}
-      className={`inline-flex h-9 items-center justify-center gap-1 rounded-md border transition disabled:cursor-not-allowed disabled:opacity-35 ${
+      className={`inline-flex h-11 w-11 items-center justify-center gap-1 rounded-md border transition disabled:cursor-not-allowed disabled:opacity-35 sm:h-9 sm:w-9 ${
         emphasize
-          ? "w-auto px-2.5 border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent)] hover:bg-[var(--accent)] hover:text-[var(--on-accent)]"
-          : "w-9 border-[var(--line)] bg-[var(--surface-elevated)] text-[var(--ink)] hover:border-[var(--accent)] hover:text-[var(--accent)]"
+          ? "w-auto px-2.5 border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent)] hover:bg-[var(--accent)] hover:text-[var(--on-accent)] sm:w-auto"
+          : "border-[var(--line)] bg-[var(--surface-elevated)] text-[var(--ink)] hover:border-[var(--accent)] hover:text-[var(--accent)]"
       }`}
     >
       {children}

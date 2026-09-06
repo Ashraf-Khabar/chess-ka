@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
-import { Search, UploadCloud, Gauge } from "lucide-react";
+import { Search, UploadCloud, Gauge, ListOrdered, MessageSquare, Cpu } from "lucide-react";
 import InteractiveBoard from "@/features/chessboard/components/InteractiveBoard";
 import { useChessGame } from "@/features/chessboard/hooks/useChessGame";
 import EnginePanel from "@/features/analysis/components/EnginePanel";
@@ -24,6 +24,8 @@ interface GamesApiResponse {
   error?: string;
 }
 
+type HomeTab = "moves" | "coach" | "engine";
+
 /**
  * Home studio: fetch Chess.com games (library) + free-play analysis board.
  * Detailed per-game review opens on /analyze/[gameId].
@@ -35,6 +37,9 @@ export default function DashboardAnalysis() {
   const [games, setGames] = useState<ChessComGame[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [homeTab, setHomeTab] = useState<HomeTab>(
+    settings.showCoachPanel ? "coach" : "moves"
+  );
 
   useEffect(() => {
     const library = loadLibrary();
@@ -103,25 +108,20 @@ export default function DashboardAnalysis() {
 
       setIsLoading(true);
       setError(null);
-      setFetchedUsername(trimmed);
-
       try {
         const response = await fetch(
-          `/api/chess-com/games?username=${encodeURIComponent(trimmed)}&limit=25&months=1`
+          `/api/chess-com/games?username=${encodeURIComponent(trimmed)}`
         );
         const data = (await response.json()) as GamesApiResponse;
         if (!response.ok) {
-          setError(data.error ?? "Fetch failed.");
-          return;
+          throw new Error(data.error || "Fetch failed");
         }
         setGames(data.games);
-        saveLibrary({ username: trimmed, games: data.games });
-      } catch {
-        setError(
-          settings.language === "fr"
-            ? "Erreur réseau lors de la récupération."
-            : "Network error while fetching games."
-        );
+        setFetchedUsername(data.username);
+        saveLibrary(data.username, data.games);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Fetch failed");
+        setGames([]);
       } finally {
         setIsLoading(false);
       }
@@ -129,13 +129,46 @@ export default function DashboardAnalysis() {
     [settings.language, username]
   );
 
+  const boardSize = settings.boardSize;
+
   const accuracyHint = useMemo(() => {
     if (!classification.quality || classification.lossCp === null) return "—";
     const loss = Math.max(0, classification.lossCp);
     return `${Math.max(0, Math.round(100 - loss / 3))}%`;
   }, [classification.lossCp, classification.quality]);
 
-  const boardSize = settings.boardSize;
+  const moveList = (
+    <MoveList
+      history={game.history}
+      plyIndex={game.plyIndex}
+      onSelectPly={game.goToPly}
+      mainLine={game.mainLine}
+      forkPly={game.forkPly}
+      variation={game.variation}
+      isOnVariation={game.isOnVariation}
+      onSelectMainPly={game.goToMainPly}
+      onReturnToFork={game.returnToFork}
+      currentQuality={classification.quality}
+    />
+  );
+
+  const coachPanel = (
+    <MoveCoachPanel
+      classification={classification}
+      bestMoveSan={bestMoveSan}
+      suggestedBestSan={suggestedBestSan}
+    />
+  );
+
+  const enginePanel = (
+    <EnginePanel
+      evaluation={evaluation}
+      sideToMove={sideToMove}
+      bestMoveSan={bestMoveSan}
+      classification={classification}
+      suggestedBestSan={suggestedBestSan}
+    />
+  );
 
   return (
     <div
@@ -155,7 +188,7 @@ export default function DashboardAnalysis() {
           error={error}
         />
 
-        <div className="panel-shell mt-4">
+        <div className="panel-shell mt-4 studio-session-card">
           <p className="eyebrow" suppressHydrationWarning>
             {t("session.eyebrow")}
           </p>
@@ -244,13 +277,7 @@ export default function DashboardAnalysis() {
           {t("library.openReview")}
         </p>
 
-        <div
-          className={`grid gap-6 lg:items-start ${
-            boardSize === "xl" || boardSize === "lg"
-              ? "lg:grid-cols-1 xl:grid-cols-[minmax(0,1fr)_220px]"
-              : "lg:grid-cols-[minmax(0,1fr)_220px]"
-          }`}
-        >
+        <div className="studio-board-stack">
           <InteractiveBoard
             game={game}
             moveQuality={classification.quality}
@@ -262,39 +289,62 @@ export default function DashboardAnalysis() {
             liveBestUci={settledLiveBestUci}
             showLiveBestArrow
           />
-          <div className="flex flex-col gap-3">
+
+          {/* Mobile: Coups / Coach / Engine dock under the board */}
+          <div className="studio-mobile-dock lg:hidden">
+            <div className="review-tabs studio-home-tabs">
+              <button
+                type="button"
+                data-active={homeTab === "moves"}
+                onClick={() => setHomeTab("moves")}
+                className="review-tab"
+              >
+                <ListOrdered size={14} />
+                <span>{t("review.moves")}</span>
+              </button>
+              {settings.showCoachPanel && (
+                <button
+                  type="button"
+                  data-active={homeTab === "coach"}
+                  onClick={() => setHomeTab("coach")}
+                  className="review-tab"
+                >
+                  <MessageSquare size={14} />
+                  <span>{t("coach.eyebrow")}</span>
+                </button>
+              )}
+              <button
+                type="button"
+                data-active={homeTab === "engine"}
+                onClick={() => setHomeTab("engine")}
+                className="review-tab"
+              >
+                <Cpu size={14} />
+                <span>{t("engine.title")}</span>
+              </button>
+            </div>
+            <div className="studio-mobile-dock-panel">
+              {homeTab === "moves" && moveList}
+              {homeTab === "coach" && settings.showCoachPanel && coachPanel}
+              {homeTab === "engine" && enginePanel}
+            </div>
+          </div>
+
+          {/* Desktop move list beside/under board */}
+          <div className="studio-desktop-moves hidden lg:flex lg:flex-col lg:gap-3">
             <p className="eyebrow" suppressHydrationWarning>
               {t("studio.moves")}
             </p>
-            <MoveList
-              history={game.history}
-              plyIndex={game.plyIndex}
-              onSelectPly={game.goToPly}
-              mainLine={game.mainLine}
-              forkPly={game.forkPly}
-              variation={game.variation}
-              isOnVariation={game.isOnVariation}
-              onSelectMainPly={game.goToMainPly}
-              onReturnToFork={game.returnToFork}
-              currentQuality={classification.quality}
-            />
+            {moveList}
           </div>
         </div>
       </section>
 
-      <section className="fade-rise fade-rise-delay flex flex-col gap-4">
-        <MoveCoachPanel
-          classification={classification}
-          bestMoveSan={bestMoveSan}
-          suggestedBestSan={suggestedBestSan}
-        />
-        <EnginePanel
-          evaluation={evaluation}
-          sideToMove={sideToMove}
-          bestMoveSan={bestMoveSan}
-          classification={classification}
-          suggestedBestSan={suggestedBestSan}
-        />
+      {/* Desktop / large screens: coach + engine as side column content;
+          on mobile these stay reachable via tabs; this block is last when scrolled */}
+      <section className="studio-insights fade-rise fade-rise-delay hidden flex-col gap-4 lg:flex">
+        {coachPanel}
+        {enginePanel}
       </section>
     </div>
   );

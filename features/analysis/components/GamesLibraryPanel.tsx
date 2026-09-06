@@ -40,7 +40,7 @@ export default function GamesLibraryPanel({
   };
 
   return (
-    <aside className="panel-shell flex max-h-[min(80vh,820px)] flex-col">
+    <aside className="panel-shell flex max-h-[min(48vh,420px)] flex-col md:max-h-[min(80vh,820px)]">
       <header className="mb-3 flex items-start justify-between gap-2 border-b border-[var(--line)] pb-3">
         <div>
           <p className="eyebrow">{t("library.eyebrow")}</p>

@@ -288,6 +288,16 @@ nav {
   padding: 0 1rem;
 }
 
+.app-nav--analyze .app-nav-inner {
+  height: 3.5rem;
+}
+
+@media (max-width: 1023px) {
+  .app-nav--analyze .app-brand-text {
+    display: none;
+  }
+}
+
 @media (min-width: 640px) {
   .app-nav-inner {
     padding: 0 1.5rem;
@@ -393,6 +403,12 @@ nav {
   border-color: var(--line);
 }
 
+.app-nav-icon[data-active="true"] {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--line));
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
 .review-back-btn {
   display: inline-flex;
   align-items: center;
@@ -454,59 +470,363 @@ nav {
   overflow: hidden;
 }
 
-@media (min-width: 1024px) {
+.cc-topbar {
+  display: none;
+}
+
+@media (min-width: 1280px) {
   .review-grid {
     grid-template-columns: minmax(0, 1.45fr) minmax(300px, 400px);
   }
-}
 
-@media (max-width: 1023px) {
-  .analyze-main {
-    height: auto;
-    min-height: calc(100dvh - 4rem);
-    overflow: auto;
+  .cc-topbar {
+    display: none;
   }
 
-  .review-shell {
-    height: auto;
-    overflow: visible;
+  .cc-player {
+    display: none !important;
+  }
+
+  .review-board {
+    height: 100%;
+    padding: 0.55rem !important;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-panel);
+    background: var(--surface-elevated);
+    box-shadow: var(--shadow);
+  }
+
+  .board-fill-square--fluid:not(.board-fill-bare) {
+    width: auto !important;
+    height: 100% !important;
+    max-height: 100% !important;
+    max-width: 100% !important;
+  }
+}
+
+/* ——— Chess.com-style mobile / tablet review (< 1280px) ——— */
+@media (max-width: 1279px) {
+  body.review-active .app-nav {
+    display: none;
+  }
+
+  .analyze-main {
+    height: 100dvh;
+    max-height: 100dvh;
+    min-height: 0;
+    overflow: hidden;
+    padding: 0;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .review-shell,
+  .review-shell--cc {
+    height: 100%;
+    max-height: 100%;
+    overflow: hidden;
+    gap: 0;
+    display: flex;
+    flex-direction: column;
+    background: var(--surface);
+  }
+
+  .review-header-desktop {
+    display: none;
+  }
+
+  .cc-topbar {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    flex-shrink: 0;
+    height: 2.35rem;
+    padding: 0 0.45rem;
+    border-bottom: 1px solid var(--line);
+    background: var(--surface-elevated);
+    z-index: 5;
+  }
+
+  .cc-topbar-back {
+    display: grid;
+    place-items: center;
+    width: 2.35rem;
+    height: 2.35rem;
+    border-radius: 0.5rem;
+    color: var(--ink);
+    flex-shrink: 0;
+  }
+
+  .cc-topbar-back:active {
+    background: var(--surface-soft);
+  }
+
+  .cc-topbar-center {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .cc-topbar-acc {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    line-height: 1.1;
+    flex-shrink: 0;
   }
 
   .review-grid {
-    height: auto;
-    overflow: visible;
-    grid-template-rows: minmax(280px, 58vw) minmax(320px, auto);
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
   }
 
-  .review-board,
-  .review-side {
+  /* Board sized to the largest square that still fits */
+  .review-board {
+    flex: 0 0 auto;
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    padding: 0 !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: transparent !important;
+  }
+
+  .review-board .board-fill-root,
+  .board-fill-root--bare {
+    flex: 0 0 auto;
     height: auto;
+    gap: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .review-board .board-fill-stage {
+    flex: 0 0 auto;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /*
+   * Max board: full viewport width, unless the phone is short —
+   * then shrink so topbar + players + controls + min dock still fit.
+   * --cc-chrome ≈ topbar 2.35 + players 3.2 + controls 2.2 + dock-min 7.25
+   */
+  .board-fill-bare {
+    width: 100vw !important;
+    height: auto !important;
+    max-width: 100vw !important;
+    max-height: none !important;
+    aspect-ratio: 1 !important;
+    border: none;
+    border-radius: 0;
+    padding: 0 !important;
+    margin-inline: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .board-fill-square--fluid {
+    width: 100vw !important;
+    height: auto !important;
+    max-width: 100vw !important;
+    max-height: none !important;
+    aspect-ratio: 1 !important;
+  }
+
+  .cc-player {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    flex-shrink: 0;
+    padding: 0.18rem 0.55rem;
+    min-height: 1.6rem;
+    background: var(--surface-elevated);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .cc-player p {
+    line-height: 1.15;
+  }
+
+  .cc-player--you {
+    border-bottom: none;
+    border-top: 1px solid var(--line);
+  }
+
+  .cc-player--active {
+    background: color-mix(in srgb, var(--accent-soft) 70%, var(--surface-elevated));
+  }
+
+  .cc-player-avatar {
+    width: 1.25rem;
+    height: 1.25rem;
+    border-radius: 0.25rem;
+    border: 1px solid var(--line);
+    flex-shrink: 0;
+  }
+
+  .cc-player-avatar--w {
+    background: #f3f0e8;
+  }
+
+  .cc-player-avatar--b {
+    background: #2a2a2a;
+  }
+
+  .board-controls--bare {
+    display: flex;
+    flex-shrink: 0;
+    width: 100%;
+    justify-content: space-evenly;
+    gap: 0.1rem;
+    padding: 0.18rem 0.15rem;
+    margin: 0;
+    background: var(--surface-elevated);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .board-controls--bare button {
+    min-height: 2.2rem;
+    min-width: 2.2rem;
+    border-radius: 0.4rem;
+  }
+
+  .board-controls--bare .board-ply-counter {
+    min-width: 3.25rem;
+    font-size: 0.65rem;
+  }
+
+  /* Dock takes leftover space under the max board (not a fixed 36vh) */
+  .review-side {
+    flex: 1 1 auto;
+    min-height: 7.25rem;
+    height: auto;
+    max-height: none;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    background: var(--surface-elevated);
+    border-top: 1px solid var(--line);
+    z-index: 4;
+  }
+
+  .review-tabs {
+    flex-shrink: 0;
+    display: flex;
+    position: static;
+    border-radius: 0;
+    border: none;
+    border-bottom: 1px solid var(--line);
+    box-shadow: none;
+    background: var(--background);
+    padding: 0;
+    gap: 0;
+  }
+
+  .review-tab {
+    flex: 1;
+    min-height: 2.55rem;
+    border-radius: 0;
+    font-size: 0.78rem;
+    font-weight: 700;
+    padding: 0.4rem 0.2rem;
+    color: var(--ink-muted);
+  }
+
+  .review-tab[data-active="true"] {
+    color: var(--accent);
+    box-shadow: inset 0 -2px 0 var(--accent);
+    background: color-mix(in srgb, var(--accent-soft) 55%, transparent);
+  }
+
+  .review-tab-panel {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+    padding: 0.5rem;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .review-tab-panel .panel-shell {
+    border: none;
+    box-shadow: none;
+    padding: 0 !important;
+    background: transparent;
+  }
+
+  .review-tab-panel .coach-panel {
+    margin: 0;
+  }
+
+  .review-moves-pane {
+    height: 100%;
     min-height: 0;
   }
 
-  .review-side-scroll,
-  .review-tab-panel {
-    overflow: visible;
+  .review-moves-pane > .min-h-0 {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .review-side-scroll {
+    overflow: hidden;
+  }
+}
+
+@media (max-width: 420px) {
+  .review-side {
+    min-height: 6.75rem;
+  }
+
+  .cc-topbar-acc > span {
+    display: none;
+  }
+
+  .review-tab span {
+    font-size: 0.72rem;
   }
 }
 
 .review-board {
   min-height: 0;
-  height: 100%;
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  padding: 0.55rem !important;
+}
+
+@media (min-width: 1280px) {
+  .review-board {
+    height: 100%;
+    padding: 0.55rem !important;
+  }
 }
 
 .review-side {
   min-width: 0;
   min-height: 0;
-  height: 100%;
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+}
+
+@media (min-width: 1280px) {
+  .review-side {
+    height: 100%;
+    gap: 0.5rem;
+  }
 }
 
 .review-side-scroll {
@@ -564,6 +884,94 @@ nav {
   flex-direction: column;
 }
 
+/* Re-assert Chess.com mobile dock AFTER base review styles (cascade) */
+@media (max-width: 1279px) {
+  body.review-active .app-nav,
+  body[data-review-layout="mobile"] .app-nav {
+    display: none !important;
+  }
+
+  .analyze-main {
+    height: 100dvh;
+    max-height: 100dvh;
+    padding: 0 !important;
+  }
+
+  .review-header-desktop {
+    display: none !important;
+  }
+
+  .cc-topbar {
+    display: flex !important;
+  }
+
+  .review-side {
+    flex: 1 1 auto;
+    min-height: 7.25rem;
+    max-height: none;
+    height: auto;
+    gap: 0;
+    border-top: 1px solid var(--line);
+    background: var(--surface-elevated);
+  }
+
+  .review-tabs {
+    gap: 0;
+    padding: 0;
+    border: none;
+    border-bottom: 1px solid var(--line);
+    border-radius: 0;
+    background: var(--background);
+    box-shadow: none;
+  }
+
+  .review-tab {
+    min-height: 2.35rem;
+    border-radius: 0;
+    font-size: 0.76rem;
+    font-weight: 700;
+    padding: 0.35rem 0.15rem;
+  }
+
+  .review-tab[data-active="true"] {
+    color: var(--accent);
+    box-shadow: inset 0 -2px 0 var(--accent);
+    background: color-mix(in srgb, var(--accent-soft) 55%, transparent);
+  }
+
+  .review-tab-panel {
+    overflow-y: auto;
+    padding: 0.4rem;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .board-fill-root--bare {
+    gap: 0;
+  }
+
+  .board-fill-bare,
+  .board-fill-square--fluid {
+    width: 100vw !important;
+    height: auto !important;
+    max-width: 100vw !important;
+    max-height: none !important;
+    aspect-ratio: 1 !important;
+    padding: 0 !important;
+  }
+
+  .review-board {
+    padding: 0 !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: transparent !important;
+  }
+
+  .review-board .board-bevel {
+    display: none !important;
+  }
+}
+
 .board-fill-root {
   display: flex;
   flex-direction: column;
@@ -589,6 +997,14 @@ nav {
   max-height: 100%;
 }
 
+.board-fill-square--fluid {
+  width: 100%;
+  height: auto;
+  max-width: 100%;
+  max-height: none;
+  aspect-ratio: 1;
+}
+
 /* Full-width home / settings studio */
 .studio-shell {
   width: 100%;
@@ -596,6 +1012,77 @@ nav {
   flex: 1 1 auto;
   min-height: 0;
   padding: 0.75rem 1rem 1.25rem;
+}
+
+.studio-board-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.studio-mobile-dock {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+  overflow: hidden;
+  background: var(--surface-elevated);
+  box-shadow: var(--shadow);
+}
+
+.studio-home-tabs {
+  border-radius: 0 !important;
+  border: none !important;
+  border-bottom: 1px solid var(--line) !important;
+  box-shadow: none !important;
+  background: var(--background) !important;
+  padding: 0 !important;
+  gap: 0 !important;
+}
+
+.studio-home-tabs .review-tab {
+  min-height: 2.55rem;
+  border-radius: 0;
+  font-weight: 700;
+}
+
+.studio-home-tabs .review-tab[data-active="true"] {
+  box-shadow: inset 0 -2px 0 var(--accent);
+  background: color-mix(in srgb, var(--accent-soft) 55%, transparent);
+}
+
+.studio-mobile-dock-panel {
+  padding: 0.65rem;
+  max-height: min(42vh, 320px);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.studio-mobile-dock-panel .panel-shell,
+.studio-mobile-dock-panel .coach-panel {
+  border: none;
+  box-shadow: none;
+  background: transparent;
+  padding: 0 !important;
+  margin: 0;
+}
+
+@media (min-width: 1024px) {
+  .studio-board-stack {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(200px, 240px);
+    gap: 1.25rem;
+    align-items: start;
+  }
+
+  .studio-board-stack > :first-child {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .studio-desktop-moves {
+    grid-column: 2;
+    grid-row: 1;
+  }
 }
 
 @media (min-width: 640px) {
@@ -610,6 +1097,43 @@ nav {
   }
 }
 
+@media (max-width: 639px) {
+  .studio-shell {
+    padding: 0.55rem 0.65rem 1rem;
+  }
+
+  .studio-main {
+    overflow: visible;
+    padding: 0.85rem !important;
+  }
+
+  .studio-main .board-frame {
+    max-width: min(100%, calc(100vw - 1.5rem)) !important;
+    padding: 0.4rem;
+  }
+
+  .studio-main .board-bevel {
+    inset: 0.28rem;
+  }
+
+  .toolbar-shell {
+    gap: 0.75rem;
+  }
+
+  .toolbar-shell h1 {
+    font-size: 1.35rem;
+  }
+
+  .eval-bar {
+    min-height: 120px;
+  }
+
+  .board-controls button {
+    min-height: 2.75rem;
+    min-width: 2.75rem;
+  }
+}
+
 .studio-grid-3 {
   display: grid;
   gap: 1rem;
@@ -620,6 +1144,14 @@ nav {
 @media (max-width: 1099px) {
   .studio-grid-3 > .studio-main {
     order: -1;
+  }
+
+  .studio-grid-3 > .studio-side {
+    order: 1;
+  }
+
+  .studio-grid-3 > .studio-insights {
+    order: 2;
   }
 }
 

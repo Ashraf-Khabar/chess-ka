@@ -27,6 +27,7 @@ import {
   isPerspectivePly,
 } from "@/features/analysis/lib/perspective";
 import { useSettings } from "@/features/settings/context/SettingsContext";
+import type { ChessComGame } from "@/features/analysis/api/chessCom";
 
 interface GameReviewPageProps {
   gameId: string;
@@ -35,17 +36,33 @@ interface GameReviewPageProps {
 type ReviewTab = "moves" | "coach" | "engine";
 
 /**
- * Full-viewport Chess.com-like review — fits the screen without page scroll.
+ * Chess.com-like game review — full-bleed board on mobile, dual-pane on desktop.
  */
 export default function GameReviewPage({ gameId }: GameReviewPageProps) {
   const { t, settings } = useSettings();
   const [session, setSession] = useState<ActiveGameSession | null>(null);
   const [ready, setReady] = useState(false);
-  const [tab, setTab] = useState<ReviewTab>("moves");
+  const [tab, setTab] = useState<ReviewTab>("coach");
+  const [isMobile, setIsMobile] = useState(() =>
+    typeof window !== "undefined"
+      ? window.matchMedia("(max-width: 1279px)").matches
+      : true
+  );
 
   useEffect(() => {
-    document.body.classList.add("no-scroll");
-    return () => document.body.classList.remove("no-scroll");
+    document.body.classList.add("no-scroll", "review-active");
+    const mq = window.matchMedia("(max-width: 1279px)");
+    const sync = () => {
+      setIsMobile(mq.matches);
+      document.body.dataset.reviewLayout = mq.matches ? "mobile" : "desktop";
+    };
+    sync();
+    mq.addEventListener("change", sync);
+    return () => {
+      mq.removeEventListener("change", sync);
+      document.body.classList.remove("no-scroll", "review-active");
+      delete document.body.dataset.reviewLayout;
+    };
   }, []);
 
   useEffect(() => {
@@ -86,7 +103,6 @@ export default function GameReviewPage({ gameId }: GameReviewPageProps) {
     uiThrottleMs: 160,
   });
 
-  // Symbols for both sides; coach text stays user-only via isUserPly
   const classification = useMoveClassification(
     game.history,
     game.plyIndex,
@@ -166,24 +182,28 @@ export default function GameReviewPage({ gameId }: GameReviewPageProps) {
         ? t("library.loss")
         : t("library.draw");
 
+  const userIsBlack = perspectiveColor === "b";
+  const bottomPlayer = userIsBlack ? chessGame.black : chessGame.white;
+  const topPlayer = userIsBlack ? chessGame.white : chessGame.black;
+  const bottomColor: "w" | "b" = userIsBlack ? "b" : "w";
+  const topColor: "w" | "b" = userIsBlack ? "w" : "b";
+
   return (
-    <div className="review-shell">
-      <header className="review-header-compact">
-        <div className="flex min-w-0 flex-wrap items-center gap-2 sm:gap-3">
-          <Link
-            href="/"
-            className="review-back-btn"
-          >
-            <ArrowLeft size={12} />
-            {t("review.back")}
+    <div className={`review-shell ${isMobile ? "review-shell--cc" : ""}`}>
+      {/* Desktop header */}
+      <header className="review-header-compact review-header-desktop">
+        <div className="flex min-w-0 flex-1 items-center gap-2">
+          <Link href="/" className="review-back-btn" aria-label={t("review.back")}>
+            <ArrowLeft size={14} />
+            <span className="review-back-label">{t("review.back")}</span>
           </Link>
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-semibold text-[var(--ink)]">
               {chessGame.white.username}
               <span className="mx-1 font-normal text-[var(--ink-muted)]">vs</span>
               {chessGame.black.username}
             </p>
-            <p className="text-[11px] text-[var(--ink-muted)] capitalize">
+            <p className="truncate text-[11px] text-[var(--ink-muted)] capitalize">
               {chessGame.time_class} ·{" "}
               {chessGame.rated ? t("review.rated") : t("review.casual")} ·{" "}
               <span suppressHydrationWarning>
@@ -193,16 +213,16 @@ export default function GameReviewPage({ gameId }: GameReviewPageProps) {
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="text-right">
+        <div className="review-header-meta flex shrink-0 items-center gap-2 sm:gap-3">
+          <div className="review-accuracy text-right">
             <p className="text-[10px] uppercase tracking-wide text-[var(--ink-muted)]">
               {t("review.accuracy")}
             </p>
-            <p className="font-display text-xl leading-none text-[var(--accent)]">
+            <p className="font-display text-lg leading-none text-[var(--accent)] sm:text-xl">
               {accuracyHint}
             </p>
           </div>
-          <div className="rounded-md border border-[var(--line)] bg-[var(--surface-soft)] px-2.5 py-1.5 text-right">
+          <div className="rounded-md border border-[var(--line)] bg-[var(--surface-soft)] px-2 py-1 text-right sm:px-2.5 sm:py-1.5">
             <p className="text-xs font-bold text-[var(--accent)]">{resultLabel}</p>
             <p className="text-[10px] text-[var(--ink-muted)]">
               {chessGame.white.rating}/{chessGame.black.rating}
@@ -211,8 +231,29 @@ export default function GameReviewPage({ gameId }: GameReviewPageProps) {
         </div>
       </header>
 
+      {/* Chess.com-style mobile top bar */}
+      <header className="cc-topbar">
+        <Link href="/" className="cc-topbar-back" aria-label={t("review.back")}>
+          <ArrowLeft size={18} />
+        </Link>
+        <div className="cc-topbar-center min-w-0">
+          <p className="truncate text-[13px] font-semibold text-[var(--ink)]">
+            {chessGame.white.username} vs {chessGame.black.username}
+          </p>
+          <p className="truncate text-[10px] capitalize text-[var(--ink-muted)]">
+            {chessGame.time_class} · {resultLabel}
+          </p>
+        </div>
+        <div className="cc-topbar-acc">
+          <span className="text-[10px] text-[var(--ink-muted)]">
+            {t("review.accuracy")}
+          </span>
+          <strong className="text-sm text-[var(--accent)]">{accuracyHint}</strong>
+        </div>
+      </header>
+
       <div className="review-grid">
-        <section className="review-board panel-shell">
+        <section className="review-board">
           <InteractiveBoard
             game={game}
             moveQuality={classification.quality}
@@ -227,8 +268,22 @@ export default function GameReviewPage({ gameId }: GameReviewPageProps) {
             showLiveBestArrow
             fillContainer
             hideSizeControls
-            initialOrientation={
-              perspectiveColor === "b" ? "black" : "white"
+            bare={isMobile}
+            initialOrientation={userIsBlack ? "black" : "white"}
+            topBanner={
+              <PlayerBar
+                player={topPlayer}
+                color={topColor}
+                active={sideToMove === topColor}
+              />
+            }
+            bottomBanner={
+              <PlayerBar
+                player={bottomPlayer}
+                color={bottomColor}
+                active={sideToMove === bottomColor}
+                highlight
+              />
             }
           />
         </section>
@@ -238,34 +293,28 @@ export default function GameReviewPage({ gameId }: GameReviewPageProps) {
             <TabButton
               active={tab === "moves"}
               onClick={() => setTab("moves")}
-              icon={<ListOrdered size={13} />}
+              icon={<ListOrdered size={14} />}
               label={t("review.moves")}
             />
             {settings.showCoachPanel && (
               <TabButton
                 active={tab === "coach"}
                 onClick={() => setTab("coach")}
-                icon={<MessageSquare size={13} />}
+                icon={<MessageSquare size={14} />}
                 label={t("coach.eyebrow")}
               />
             )}
             <TabButton
               active={tab === "engine"}
               onClick={() => setTab("engine")}
-              icon={<Cpu size={13} />}
+              icon={<Cpu size={14} />}
               label={t("engine.title")}
             />
           </div>
 
           <div className="review-tab-panel">
             {tab === "moves" && (
-              <div className="panel-shell flex min-h-0 flex-1 flex-col !p-3">
-                <div className="mb-2 flex items-center justify-between">
-                  <p className="eyebrow">{t("review.moves")}</p>
-                  <p className="font-mono text-[11px] text-[var(--ink-muted)]">
-                    {username}
-                  </p>
-                </div>
+              <div className="review-moves-pane flex min-h-0 flex-1 flex-col">
                 <div className="min-h-0 flex-1 overflow-hidden">
                   <MoveList
                     history={game.history}
@@ -284,17 +333,22 @@ export default function GameReviewPage({ gameId }: GameReviewPageProps) {
               </div>
             )}
 
-            {tab === "coach" && settings.showCoachPanel && (
-              <div className="min-h-0 flex-1 overflow-y-auto">
-                <MoveCoachPanel
-                  classification={classification}
-                  bestMoveSan={bestMoveSan}
-                  suggestedBestSan={suggestedBestSan}
-                  isUserPly={isUserPly}
-                  opponentName={opponentName}
-                />
-              </div>
-            )}
+            {tab === "coach" &&
+              (settings.showCoachPanel ? (
+                <div className="min-h-0 flex-1 overflow-y-auto">
+                  <MoveCoachPanel
+                    classification={classification}
+                    bestMoveSan={bestMoveSan}
+                    suggestedBestSan={suggestedBestSan}
+                    isUserPly={isUserPly}
+                    opponentName={opponentName}
+                  />
+                </div>
+              ) : (
+                <p className="p-3 text-sm text-[var(--ink-muted)]">
+                  {t("settings.showCoach")}
+                </p>
+              ))}
 
             {tab === "engine" && (
               <div className="min-h-0 flex-1 overflow-y-auto">
@@ -312,6 +366,39 @@ export default function GameReviewPage({ gameId }: GameReviewPageProps) {
             )}
           </div>
         </aside>
+      </div>
+    </div>
+  );
+}
+
+function PlayerBar({
+  player,
+  color,
+  active,
+  highlight = false,
+}: {
+  player: ChessComGame["white"];
+  color: "w" | "b";
+  active?: boolean;
+  highlight?: boolean;
+}) {
+  return (
+    <div
+      className={`cc-player ${highlight ? "cc-player--you" : ""} ${
+        active ? "cc-player--active" : ""
+      }`}
+    >
+      <span
+        className={`cc-player-avatar ${
+          color === "w" ? "cc-player-avatar--w" : "cc-player-avatar--b"
+        }`}
+        aria-hidden
+      />
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-[13px] font-semibold text-[var(--ink)]">
+          {player.username}
+        </p>
+        <p className="text-[11px] text-[var(--ink-muted)]">{player.rating}</p>
       </div>
     </div>
   );
@@ -336,7 +423,7 @@ function TabButton({
       className="review-tab inline-flex items-center justify-center gap-1"
     >
       {icon}
-      {label}
+      <span>{label}</span>
     </button>
   );
 }
