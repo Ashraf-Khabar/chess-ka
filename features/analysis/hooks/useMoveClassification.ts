@@ -298,10 +298,7 @@ export function useMoveClassification(
 
     const ok = finalize(
       latestBeforeRef.current,
-      {
-        cp: afterEval.cp,
-        mate: afterEval.mate,
-      },
+      afterEval,
       played,
       playedUci,
       mover,
