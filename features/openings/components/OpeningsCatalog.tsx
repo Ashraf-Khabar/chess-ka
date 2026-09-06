@@ -1,7 +1,13 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Cpu, ListOrdered, MessageSquare, Library } from "lucide-react";
+import {
+  BookOpen,
+  Cpu,
+  ListOrdered,
+  MessageSquare,
+  Swords,
+} from "lucide-react";
 import { Chess } from "chess.js";
 import InteractiveBoard from "@/features/chessboard/components/InteractiveBoard";
 import { useChessGame } from "@/features/chessboard/hooks/useChessGame";
@@ -18,18 +24,23 @@ import {
 import { useMoveClassification } from "@/features/analysis/hooks/useMoveClassification";
 import { uciToSan } from "@/features/analysis/lib/uci";
 import {
+  CATEGORY_ORDER,
+  OPENING_FAMILIES,
   OPENING_LINES,
+  findVariation,
+  getCategoryLabel,
   matchOpening,
-  type OpeningLine,
+  type OpeningVariation,
+  type VariationKind,
 } from "@/features/openings/lib/openingBook";
 import { useMediaQuery } from "@/features/components/hooks/useMediaQuery";
 import { useSettings } from "@/features/settings/context/SettingsContext";
 
-type CatalogTab = "moves" | "coach" | "engine" | "library";
+type CatalogTab = "moves" | "coach" | "engine" | "book" | "ideas";
 
-function openingToPgn(line: OpeningLine): string {
+function openingToPgn(uciMoves: string[]): string {
   const game = new Chess();
-  for (const uci of line.uciMoves) {
+  for (const uci of uciMoves) {
     const from = uci.slice(0, 2);
     const to = uci.slice(2, 4);
     const promotion = uci.length > 4 ? uci[4] : undefined;
@@ -38,22 +49,38 @@ function openingToPgn(line: OpeningLine): string {
   return game.pgn();
 }
 
+function kindLabel(kind: VariationKind, lang: "fr" | "en"): string {
+  if (lang === "fr") {
+    if (kind === "gambit") return "Gambit";
+    if (kind === "main") return "Principale";
+    return "Variation";
+  }
+  if (kind === "gambit") return "Gambit";
+  if (kind === "main") return "Main";
+  return "Variation";
+}
+
 /**
- * Openings catalog — pick a line, walk it on the board with book + quality marks.
- * Same desk shape as the analysis home: sticky board + sheet, or three columns.
+ * Openings catalog — families, variations, gambits, White/Black ideas.
  */
 export default function OpeningsCatalog() {
   const { settings, t } = useSettings();
+  const lang = settings.language;
   const isDesktop = useMediaQuery("(min-width: 1024px)");
 
-  const [selectedId, setSelectedId] = useState(OPENING_LINES[0]?.id ?? "");
-  const [tab, setTab] = useState<CatalogTab>("library");
+  const defaultId = OPENING_FAMILIES[0]?.variations[0]?.id ?? "";
+  const [selectedId, setSelectedId] = useState(defaultId);
+  const [expandedFamily, setExpandedFamily] = useState(
+    OPENING_FAMILIES[0]?.id ?? ""
+  );
+  const [tab, setTab] = useState<CatalogTab>("book");
 
-  const selected =
-    OPENING_LINES.find((line) => line.id === selectedId) ?? OPENING_LINES[0];
+  const selectedPack = findVariation(selectedId);
+  const selected: OpeningVariation | null = selectedPack?.variation ?? null;
+  const family = selectedPack?.family ?? null;
 
   const pgn = useMemo(
-    () => (selected ? openingToPgn(selected) : null),
+    () => (selected ? openingToPgn(selected.uciMoves) : null),
     [selected]
   );
 
@@ -99,16 +126,21 @@ export default function OpeningsCatalog() {
   const settledLiveBestUci = evaluation.isThinking ? null : evaluation.bestMove;
 
   const matched = matchOpening(game.history, game.plyIndex);
-  const openingName =
-    settings.language === "fr"
-      ? (matched?.nameFr ?? selected?.nameFr)
-      : (matched?.nameEn ?? selected?.nameEn);
+  const titleName =
+    lang === "fr"
+      ? (matched?.nameFr ?? selected?.nameFr ?? "")
+      : (matched?.nameEn ?? selected?.nameEn ?? "");
 
   const evalLabel = formatEvaluation(
     evaluation.cp,
     evaluation.mate,
     sideToMove
   );
+
+  const selectVariation = (id: string, familyId: string) => {
+    setSelectedId(id);
+    setExpandedFamily(familyId);
+  };
 
   const board = (
     <InteractiveBoard
@@ -159,8 +191,41 @@ export default function OpeningsCatalog() {
     />
   );
 
-  const lineList = (
-    <div className="library-panel">
+  const ideasPanel = selected && family && (
+    <div className="opening-ideas">
+      <p className="eyebrow">{t("openings.ideas")}</p>
+      <h3 className="font-display text-lg text-[var(--ink)]">
+        {lang === "fr" ? selected.nameFr : selected.nameEn}
+      </h3>
+      <p className="opening-ideas-summary">
+        {lang === "fr" ? selected.summaryFr : selected.summaryEn}
+      </p>
+
+      <div className="opening-idea-card">
+        <p className="opening-idea-side">
+          <Swords size={12} aria-hidden />
+          {t("openings.white")}
+        </p>
+        <p>{lang === "fr" ? selected.ideaWhiteFr : selected.ideaWhiteEn}</p>
+      </div>
+      <div className="opening-idea-card opening-idea-card--black">
+        <p className="opening-idea-side">{t("openings.black")}</p>
+        <p>{lang === "fr" ? selected.ideaBlackFr : selected.ideaBlackEn}</p>
+      </div>
+
+      <div className="opening-family-blurb">
+        <p className="eyebrow">
+          {lang === "fr" ? family.nameFr : family.nameEn}
+        </p>
+        <p className="text-xs leading-relaxed text-[var(--ink-muted)]">
+          {lang === "fr" ? family.summaryFr : family.summaryEn}
+        </p>
+      </div>
+    </div>
+  );
+
+  const bookList = (
+    <div className="library-panel opening-catalog">
       <header className="library-head">
         <div className="min-w-0">
           <p className="eyebrow">{t("openings.eyebrow")}</p>
@@ -170,27 +235,78 @@ export default function OpeningsCatalog() {
         </div>
         <span className="chip">{OPENING_LINES.length}</span>
       </header>
-      <div className="library-list">
-        {OPENING_LINES.map((line) => {
-          const active = line.id === selectedId;
-          const label = settings.language === "fr" ? line.nameFr : line.nameEn;
+
+      <div className="opening-catalog-scroll">
+        {CATEGORY_ORDER.map((category) => {
+          const families = OPENING_FAMILIES.filter(
+            (f) => f.category === category
+          );
+          if (!families.length) return null;
           return (
-            <button
-              key={line.id}
-              type="button"
-              onClick={() => setSelectedId(line.id)}
-              data-active={active ? "true" : "false"}
-              className="list-row"
-            >
-              <span className="min-w-0 flex-1">
-                <span className="block truncate text-[0.8125rem] font-semibold text-[var(--ink)]">
-                  {label}
-                </span>
-                <span className="text-[0.6875rem] text-[var(--ink-faint)]">
-                  {line.eco} · {line.uciMoves.length} {t("openings.plies")}
-                </span>
-              </span>
-            </button>
+            <div key={category} className="opening-cat-block">
+              <p className="opening-cat-label">
+                {getCategoryLabel(category, lang)}
+              </p>
+              {families.map((fam) => {
+                const open = expandedFamily === fam.id;
+                return (
+                  <div key={fam.id} className="opening-family">
+                    <button
+                      type="button"
+                      className="opening-family-toggle"
+                      data-open={open ? "true" : "false"}
+                      onClick={() =>
+                        setExpandedFamily((prev) =>
+                          prev === fam.id ? "" : fam.id
+                        )
+                      }
+                    >
+                      <span className="min-w-0 flex-1 text-left">
+                        <span className="block truncate text-[0.8125rem] font-semibold text-[var(--ink)]">
+                          {lang === "fr" ? fam.nameFr : fam.nameEn}
+                        </span>
+                        <span className="text-[0.625rem] text-[var(--ink-faint)]">
+                          {fam.eco} · {fam.variations.length}{" "}
+                          {t("openings.lines")}
+                        </span>
+                      </span>
+                      <BookOpen size={14} aria-hidden />
+                    </button>
+                    {open && (
+                      <div className="opening-var-list">
+                        {fam.variations.map((v) => {
+                          const active = v.id === selectedId;
+                          return (
+                            <button
+                              key={v.id}
+                              type="button"
+                              onClick={() => selectVariation(v.id, fam.id)}
+                              data-active={active ? "true" : "false"}
+                              className="list-row opening-var-row"
+                            >
+                              <span className="min-w-0 flex-1 text-left">
+                                <span className="block truncate text-[0.8125rem] font-semibold text-[var(--ink)]">
+                                  {lang === "fr" ? v.nameFr : v.nameEn}
+                                </span>
+                                <span className="text-[0.625rem] text-[var(--ink-faint)]">
+                                  {v.eco} · {kindLabel(v.kind, lang)} ·{" "}
+                                  {v.uciMoves.length} {t("openings.plies")}
+                                </span>
+                              </span>
+                              {v.kind === "gambit" && (
+                                <span className="chip chip--accent">
+                                  {kindLabel("gambit", lang)}
+                                </span>
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           );
         })}
       </div>
@@ -208,10 +324,16 @@ export default function OpeningsCatalog() {
   if (!isDesktop) {
     const tabs: AnalysisSheetTab[] = [
       {
-        id: "library",
+        id: "book",
         label: t("openings.eyebrow"),
-        icon: <Library size={13} aria-hidden />,
-        content: lineList,
+        icon: <BookOpen size={13} aria-hidden />,
+        content: bookList,
+      },
+      {
+        id: "ideas",
+        label: t("openings.ideas"),
+        icon: <Swords size={13} aria-hidden />,
+        content: ideasPanel,
       },
       {
         id: "moves",
@@ -244,7 +366,7 @@ export default function OpeningsCatalog() {
         <div className="desk-strip">
           <div className="min-w-0">
             <p className="eyebrow">{t("openings.eyebrow")}</p>
-            <h1 className="truncate">{openingName}</h1>
+            <h1 className="truncate">{titleName}</h1>
           </div>
           <span className="desk-strip-eval">{evalLabel}</span>
         </div>
@@ -255,6 +377,9 @@ export default function OpeningsCatalog() {
               <span className="chip chip--accent">{t("openings.book")}</span>
             )}
             {selected && <span className="chip">{selected.eco}</span>}
+            {selected && (
+              <span className="chip">{kindLabel(selected.kind, lang)}</span>
+            )}
           </div>
           <p className="text-xs leading-relaxed text-[var(--ink-faint)]">
             {t("openings.hint")}
@@ -274,23 +399,21 @@ export default function OpeningsCatalog() {
   return (
     <div className="desk-desktop">
       <section className="desk-rail" aria-label={t("openings.title")}>
-        {lineList}
-        <div className="rail-block">
-          <p className="text-xs leading-relaxed text-[var(--ink-faint)]">
-            {t("openings.hint")}
-          </p>
-        </div>
+        {bookList}
       </section>
 
       <section className="desk-stage fade-rise">
         <div className="desk-masthead">
           <p className="eyebrow">{t("openings.eyebrow")}</p>
-          <h1>{openingName}</h1>
+          <h1>{titleName}</h1>
           <div className="desk-masthead-meta">
             {matched && (
               <span className="chip chip--accent">{t("openings.book")}</span>
             )}
             {selected && <span className="chip">{selected.eco}</span>}
+            {selected && (
+              <span className="chip">{kindLabel(selected.kind, lang)}</span>
+            )}
           </div>
         </div>
 
@@ -299,8 +422,9 @@ export default function OpeningsCatalog() {
 
       <section
         className="desk-rail desk-rail--right"
-        aria-label={t("engine.title")}
+        aria-label={t("openings.ideas")}
       >
+        <div className="rail-block">{ideasPanel}</div>
         <div className="rail-block">
           <div className="rail-head">
             <p className="eyebrow">{t("engine.eval")}</p>

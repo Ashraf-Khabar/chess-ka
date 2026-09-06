@@ -101,11 +101,26 @@
 }
 
 .board-controls--bare {
+  position: fixed;
+  left: 0;
+  right: 0;
+  /* Sit just above the coach sheet so ◀ ▶ stay visible on mobile */
+  bottom: calc(var(--shell-tabbar-h) + var(--sheet-peek) + var(--safe-b));
+  z-index: calc(var(--z-sheet) + 5);
   justify-content: space-evenly;
   gap: 0.15rem;
-  padding: 0.3rem 0.25rem;
-  border-top: var(--rule);
-  background: var(--surface);
+  padding: 0.35rem 0.35rem;
+  border-top: var(--rule-strong);
+  background: var(--surface-elevated);
+  box-shadow: 0 -6px 18px rgba(0, 0, 0, 0.28);
+}
+
+.app-shell--analyze .board-controls--bare {
+  bottom: calc(var(--sheet-peek) + var(--safe-b));
+}
+
+[data-app-theme="atelier"] .board-controls--bare {
+  box-shadow: 0 -6px 18px rgba(27, 22, 19, 0.12);
 }
 
 .board-btn {

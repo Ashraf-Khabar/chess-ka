@@ -29,7 +29,7 @@ interface AnalysisSheetProps {
 }
 
 /** Resting heights as a fraction of the viewport, smallest first. */
-const SNAP_POINTS = [0.26, 0.56, 0.88] as const;
+const SNAP_POINTS = [0.22, 0.52, 0.84] as const;
 const TAP_SLOP_PX = 6;
 
 /**

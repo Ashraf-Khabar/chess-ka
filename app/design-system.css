@@ -10,7 +10,7 @@
   --shell-sidebar-w: 3.75rem;
   --shell-tabbar-h: 4rem;
   --shell-topbar-h: 3.25rem;
-  --sheet-peek: 26dvh;
+  --sheet-peek: 22dvh;
 
   --safe-b: env(safe-area-inset-bottom, 0px);
   --safe-t: env(safe-area-inset-top, 0px);
@@ -625,7 +625,8 @@ body.no-scroll {
   width: 100%;
   max-width: 100%;
   background: var(--stage);
-  padding-bottom: calc(var(--sheet-peek) + 1rem);
+  /* Room for sheet peek + floating board nav (~3rem) */
+  padding-bottom: calc(var(--sheet-peek) + 3.25rem);
 }
 
 .desk-mobile--immersive {
@@ -634,7 +635,7 @@ body.no-scroll {
   overflow-x: hidden;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  padding-bottom: calc(var(--sheet-peek) + var(--safe-b) + 1rem);
+  padding-bottom: calc(var(--sheet-peek) + var(--safe-b) + 3.25rem);
 }
 
 .desk-board-sticky {
@@ -642,8 +643,19 @@ body.no-scroll {
   top: 0;
   z-index: var(--z-sticky);
   width: 100%;
+  /* Never extend under the coach sheet + nav strip */
+  max-height: calc(
+    100dvh - var(--shell-tabbar-h) - var(--sheet-peek) - var(--safe-b) - 3.25rem
+  );
+  overflow: hidden;
   background: var(--stage);
   border-bottom: var(--rule-strong);
+}
+
+.app-shell--analyze .desk-board-sticky {
+  max-height: calc(
+    100dvh - var(--sheet-peek) - var(--safe-b) - 6.5rem
+  );
 }
 
 /*
@@ -652,47 +664,37 @@ body.no-scroll {
  * strip and the tab bar; the sheet itself is the remaining 26dvh.
  */
 .desk-board-sticky .board-root {
-  width: min(100%, max(17rem, calc(74dvh - 200px)));
+  width: min(100%, max(17rem, calc(100% - 0.5rem)));
+  max-width: min(100%, calc(100dvh - var(--shell-tabbar-h) - var(--sheet-peek) - 9rem));
   margin-inline: auto;
   transition: width 200ms var(--ease-out);
 }
 
 /* Mobile board scale via settings boardSize (set on <html data-board-size>) */
 html[data-board-size="sm"] .desk-board-sticky .board-root {
-  width: min(88%, max(15rem, calc(62dvh - 200px)));
+  max-width: min(88%, calc(100dvh - var(--shell-tabbar-h) - var(--sheet-peek) - 11rem));
 }
 
 html[data-board-size="md"] .desk-board-sticky .board-root {
-  width: min(96%, max(16rem, calc(70dvh - 200px)));
+  max-width: min(96%, calc(100dvh - var(--shell-tabbar-h) - var(--sheet-peek) - 10rem));
 }
 
 html[data-board-size="lg"] .desk-board-sticky .board-root {
-  width: min(100%, max(17rem, calc(76dvh - 190px)));
+  max-width: min(100%, calc(100dvh - var(--shell-tabbar-h) - var(--sheet-peek) - 9rem));
 }
 
 html[data-board-size="xl"] .desk-board-sticky .board-root {
-  width: min(100%, max(18rem, calc(82dvh - 170px)));
+  max-width: min(100%, calc(100dvh - var(--shell-tabbar-h) - var(--sheet-peek) - 8rem));
 }
 
-/* Analyzer / review: more room above the immersive sheet */
+.app-shell--analyze .desk-board-sticky .board-root,
 .desk-mobile--immersive .desk-board-sticky .board-root {
-  width: min(100%, max(18rem, calc(86dvh - 150px)));
+  max-width: min(100%, calc(100dvh - var(--sheet-peek) - 10rem));
 }
 
-html[data-board-size="sm"] .desk-mobile--immersive .desk-board-sticky .board-root {
-  width: min(90%, max(15rem, calc(68dvh - 150px)));
-}
-
-html[data-board-size="md"] .desk-mobile--immersive .desk-board-sticky .board-root {
-  width: min(96%, max(16.5rem, calc(76dvh - 150px)));
-}
-
-html[data-board-size="lg"] .desk-mobile--immersive .desk-board-sticky .board-root {
-  width: min(100%, max(17.5rem, calc(84dvh - 140px)));
-}
-
+html[data-board-size="xl"] .app-shell--analyze .desk-board-sticky .board-root,
 html[data-board-size="xl"] .desk-mobile--immersive .desk-board-sticky .board-root {
-  width: min(100%, max(19rem, calc(90dvh - 120px)));
+  max-width: min(100%, calc(100dvh - var(--sheet-peek) - 8.5rem));
 }
 
 .desk-mobile-body {
@@ -1414,6 +1416,110 @@ html[data-board-size="xl"] .review-desktop-board .board-stage-wrap {
 .list-row[data-active="true"] {
   border-left-color: var(--accent);
   background: var(--accent-soft);
+}
+
+/* -------------------------------------------------------- openings catalog */
+.opening-catalog {
+  min-height: 0;
+  flex: 1 1 auto;
+}
+
+.opening-catalog-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  max-height: min(70dvh, 42rem);
+}
+
+.opening-cat-block {
+  border-bottom: var(--rule);
+}
+
+.opening-cat-label {
+  margin: 0;
+  padding: 0.55rem 0.9rem 0.35rem;
+  font-size: 0.5625rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent);
+  background: var(--stage);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.opening-family-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  width: 100%;
+  min-height: 2.85rem;
+  padding: 0.55rem 0.9rem;
+  border-bottom: var(--rule);
+  color: var(--ink-muted);
+  background: transparent;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.opening-family-toggle:hover,
+.opening-family-toggle[data-open="true"] {
+  color: var(--ink);
+  background: var(--surface-soft);
+}
+
+.opening-var-list {
+  border-bottom: var(--rule);
+  background: var(--stage);
+}
+
+.opening-var-row {
+  padding-left: 1.15rem;
+}
+
+.opening-ideas {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.opening-ideas-summary {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--ink-muted);
+}
+
+.opening-idea-card {
+  border: var(--rule);
+  border-left: 3px solid #e8d5b5;
+  padding: 0.75rem 0.85rem;
+  background: var(--stage);
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--ink);
+}
+
+.opening-idea-card--black {
+  border-left-color: #6b5344;
+}
+
+.opening-idea-side {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0 0 0.35rem;
+  font-size: 0.5625rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.opening-family-blurb {
+  padding-top: 0.35rem;
+  border-top: var(--rule);
 }
 
 /* --------------------------------------------------------------- motion */

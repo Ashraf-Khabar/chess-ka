@@ -51,9 +51,13 @@ const fr = {
   "openings.eyebrow": "Catalogue",
   "openings.title": "Ouvertures",
   "openings.hint":
-    "Choisissez une ouverture, parcourez la ligne : symbole livre en théorie, puis pastilles de qualité si vous déviez.",
+    "Choisissez une famille, une variation ou un gambit. Parcourez la ligne : livre en théorie, idées Blancs/Noirs dans l’onglet Logique.",
   "openings.plies": "coups",
   "openings.book": "Théorie",
+  "openings.ideas": "Logique",
+  "openings.white": "Plan des Blancs",
+  "openings.black": "Plan des Noirs",
+  "openings.lines": "lignes",
 
   "engine.eyebrow": "Moteur local",
   "engine.title": "Stockfish",
@@ -240,9 +244,13 @@ const en: Record<DictKey, string> = {
   "openings.eyebrow": "Catalog",
   "openings.title": "Openings",
   "openings.hint":
-    "Pick an opening and step through the line: book badge in theory, then quality markers if you deviate.",
+    "Pick a family, variation, or gambit. Step through the line: book in theory, White/Black ideas in the Logic tab.",
   "openings.plies": "moves",
   "openings.book": "Book",
+  "openings.ideas": "Logic",
+  "openings.white": "White’s plan",
+  "openings.black": "Black’s plan",
+  "openings.lines": "lines",
 
   "engine.eyebrow": "Local engine",
   "engine.title": "Stockfish",
