@@ -2,7 +2,15 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Cpu, ListOrdered, Loader2, MessageSquare } from "lucide-react";
+import {
+  ArrowLeft,
+  Cpu,
+  ListOrdered,
+  Loader2,
+  MessageSquare,
+  PanelRightClose,
+  PanelRightOpen,
+} from "lucide-react";
 import InteractiveBoard from "@/features/chessboard/components/InteractiveBoard";
 import { useChessGame } from "@/features/chessboard/hooks/useChessGame";
 import AnalysisSheet, {
@@ -53,6 +61,28 @@ export default function GameReviewPage({ gameId }: GameReviewPageProps) {
   const [session, setSession] = useState<ActiveGameSession | null>(null);
   const [ready, setReady] = useState(false);
   const [tab, setTab] = useState<ReviewTab>("coach");
+  const [sideOpen, setSideOpen] = useState(true);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("cpa-desk-review:side");
+      if (raw !== null) setSideOpen(raw === "1");
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  const toggleSide = () => {
+    setSideOpen((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem("cpa-desk-review:side", next ? "1" : "0");
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
+  };
 
   useEffect(() => {
     const active = loadActiveGame();
@@ -397,39 +427,61 @@ export default function GameReviewPage({ gameId }: GameReviewPageProps) {
         </div>
       </header>
 
-      <div className="review-desktop">
+      <div
+        className="review-desktop"
+        data-side={sideOpen ? "open" : "closed"}
+      >
         <section className="review-desktop-board">{board}</section>
 
-        <aside className="review-desktop-side">
-          <div className="review-tabs" role="tablist">
-            <TabButton
-              active={tab === "moves"}
-              onClick={() => setTab("moves")}
-              icon={<ListOrdered size={13} aria-hidden />}
-              label={t("review.moves")}
-            />
-            {settings.showCoachPanel && (
+        <aside
+          className="review-desktop-side"
+          data-collapsed={sideOpen ? "false" : "true"}
+        >
+          <button
+            type="button"
+            className="review-side-toggle"
+            onClick={toggleSide}
+            aria-expanded={sideOpen}
+            title={sideOpen ? t("engine.title") : t("engine.title")}
+            aria-label={sideOpen ? "Réduire le panneau" : "Ouvrir le panneau"}
+          >
+            {sideOpen ? (
+              <PanelRightClose size={18} aria-hidden />
+            ) : (
+              <PanelRightOpen size={18} aria-hidden />
+            )}
+          </button>
+          <div className="review-side-body">
+            <div className="review-tabs" role="tablist">
               <TabButton
-                active={tab === "coach"}
-                onClick={() => setTab("coach")}
-                icon={<MessageSquare size={13} aria-hidden />}
-                label={t("coach.eyebrow")}
+                active={tab === "moves"}
+                onClick={() => setTab("moves")}
+                icon={<ListOrdered size={13} aria-hidden />}
+                label={t("review.moves")}
               />
-            )}
-            <TabButton
-              active={tab === "engine"}
-              onClick={() => setTab("engine")}
-              icon={<Cpu size={13} aria-hidden />}
-              label={t("engine.title")}
-            />
-          </div>
+              {settings.showCoachPanel && (
+                <TabButton
+                  active={tab === "coach"}
+                  onClick={() => setTab("coach")}
+                  icon={<MessageSquare size={13} aria-hidden />}
+                  label={t("coach.eyebrow")}
+                />
+              )}
+              <TabButton
+                active={tab === "engine"}
+                onClick={() => setTab("engine")}
+                icon={<Cpu size={13} aria-hidden />}
+                label={t("engine.title")}
+              />
+            </div>
 
-          <div className="review-tab-panel" role="tabpanel">
-            {tab === "moves" && (
-              <div className="flex h-full min-h-0 flex-col">{movesPanel}</div>
-            )}
-            {tab === "coach" && coachPanel}
-            {tab === "engine" && enginePanel}
+            <div className="review-tab-panel" role="tabpanel">
+              {tab === "moves" && (
+                <div className="flex h-full min-h-0 flex-col">{movesPanel}</div>
+              )}
+              {tab === "coach" && coachPanel}
+              {tab === "engine" && enginePanel}
+            </div>
           </div>
         </aside>
       </div>

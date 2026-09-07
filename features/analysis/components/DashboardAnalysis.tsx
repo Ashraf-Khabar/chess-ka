@@ -25,6 +25,7 @@ import { useMoveClassification } from "@/features/analysis/hooks/useMoveClassifi
 import { uciToSan } from "@/features/analysis/lib/uci";
 import type { ChessComGame } from "@/features/analysis/api/chessCom";
 import { useMediaQuery } from "@/features/components/hooks/useMediaQuery";
+import DeskDesktop from "@/features/components/layout/DeskDesktop";
 import { useSettings } from "@/features/settings/context/SettingsContext";
 import { loadLibrary, saveLibrary } from "@/features/analysis/lib/gameSession";
 
@@ -336,49 +337,52 @@ export default function DashboardAnalysis() {
   }
 
   return (
-    <div className="desk-desktop">
-      <section className="desk-rail" aria-label={t("library.title")}>
-        <div className="rail-block">{fetchForm}</div>
-        {libraryPanel}
-        <div className="rail-block">
-          <p className="eyebrow mb-2" suppressHydrationWarning>
-            {t("session.eyebrow")}
-          </p>
-          {sessionStats}
-        </div>
-      </section>
-
-      <section className="desk-stage fade-rise">
-        <div className="desk-masthead">
-          <p className="eyebrow" suppressHydrationWarning>
-            {t("studio.eyebrow")}
-          </p>
-          <h1 suppressHydrationWarning>{t("studio.title")}</h1>
-          <div className="desk-masthead-meta">
-            <span className="chip chip--accent">{t("desk.play")}</span>
-            <span className="text-xs text-[var(--ink-faint)]">
-              {t("library.openReview")}
-            </span>
+    <DeskDesktop
+      storageKey="cpa-desk-analysis"
+      leftLabel={t("library.title")}
+      rightLabel={t("engine.title")}
+      left={
+        <>
+          <div className="rail-block">{fetchForm}</div>
+          {libraryPanel}
+          <div className="rail-block">
+            <p className="eyebrow mb-2" suppressHydrationWarning>
+              {t("session.eyebrow")}
+            </p>
+            {sessionStats}
           </div>
-        </div>
-
-        <div className="desk-board">{board}</div>
-      </section>
-
-      <section
-        className="desk-rail desk-rail--right"
-        aria-label={t("engine.title")}
-      >
-        <div className="rail-block">
-          <div className="rail-head">
-            <p className="eyebrow">{t("engine.eval")}</p>
-            <span className="desk-eval-hero !text-2xl">{evalLabel}</span>
+        </>
+      }
+      right={
+        <>
+          <div className="rail-block">
+            <div className="rail-head">
+              <p className="eyebrow">{t("engine.eval")}</p>
+              <span className="desk-eval-hero !text-2xl">{evalLabel}</span>
+            </div>
+            {moveList}
           </div>
-          {moveList}
-        </div>
-        {settings.showCoachPanel && coachPanel}
-        {enginePanel}
-      </section>
-    </div>
+          {settings.showCoachPanel && coachPanel}
+          {enginePanel}
+        </>
+      }
+      center={
+        <>
+          <div className="desk-masthead">
+            <p className="eyebrow" suppressHydrationWarning>
+              {t("studio.eyebrow")}
+            </p>
+            <h1 suppressHydrationWarning>{t("studio.title")}</h1>
+            <div className="desk-masthead-meta">
+              <span className="chip chip--accent">{t("desk.play")}</span>
+              <span className="text-xs text-[var(--ink-faint)]">
+                {t("library.openReview")}
+              </span>
+            </div>
+          </div>
+          <div className="desk-board">{board}</div>
+        </>
+      }
+    />
   );
 }

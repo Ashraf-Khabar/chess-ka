@@ -34,6 +34,7 @@ import {
   type VariationKind,
 } from "@/features/openings/lib/openingBook";
 import { useMediaQuery } from "@/features/components/hooks/useMediaQuery";
+import DeskDesktop from "@/features/components/layout/DeskDesktop";
 import { useSettings } from "@/features/settings/context/SettingsContext";
 
 type CatalogTab = "moves" | "coach" | "engine" | "book" | "ideas";
@@ -192,34 +193,34 @@ export default function OpeningsCatalog() {
   );
 
   const ideasPanel = selected && family && (
-    <div className="opening-ideas">
-      <p className="eyebrow">{t("openings.ideas")}</p>
-      <h3 className="font-display text-lg text-[var(--ink)]">
-        {lang === "fr" ? selected.nameFr : selected.nameEn}
-      </h3>
-      <p className="opening-ideas-summary">
-        {lang === "fr" ? selected.summaryFr : selected.summaryEn}
-      </p>
+    <div className="opening-ideas-panel">
+      <div className="opening-ideas">
+        <p className="eyebrow">{t("openings.ideas")}</p>
+        <h3>{lang === "fr" ? selected.nameFr : selected.nameEn}</h3>
+        <p className="opening-ideas-summary">
+          {lang === "fr" ? selected.summaryFr : selected.summaryEn}
+        </p>
 
-      <div className="opening-idea-card">
-        <p className="opening-idea-side">
-          <Swords size={12} aria-hidden />
-          {t("openings.white")}
-        </p>
-        <p>{lang === "fr" ? selected.ideaWhiteFr : selected.ideaWhiteEn}</p>
-      </div>
-      <div className="opening-idea-card opening-idea-card--black">
-        <p className="opening-idea-side">{t("openings.black")}</p>
-        <p>{lang === "fr" ? selected.ideaBlackFr : selected.ideaBlackEn}</p>
-      </div>
+        <div className="opening-idea-card opening-idea-card--white">
+          <p className="opening-idea-side">
+            <Swords size={12} aria-hidden />
+            {t("openings.white")}
+          </p>
+          <p>{lang === "fr" ? selected.ideaWhiteFr : selected.ideaWhiteEn}</p>
+        </div>
+        <div className="opening-idea-card opening-idea-card--black">
+          <p className="opening-idea-side">{t("openings.black")}</p>
+          <p>{lang === "fr" ? selected.ideaBlackFr : selected.ideaBlackEn}</p>
+        </div>
 
-      <div className="opening-family-blurb">
-        <p className="eyebrow">
-          {lang === "fr" ? family.nameFr : family.nameEn}
-        </p>
-        <p className="text-xs leading-relaxed text-[var(--ink-muted)]">
-          {lang === "fr" ? family.summaryFr : family.summaryEn}
-        </p>
+        <div className="opening-family-blurb">
+          <p className="eyebrow">
+            {lang === "fr" ? family.nameFr : family.nameEn}
+          </p>
+          <p className="text-sm leading-relaxed text-[var(--ink-muted)]">
+            {lang === "fr" ? family.summaryFr : family.summaryEn}
+          </p>
+        </div>
       </div>
     </div>
   );
@@ -282,7 +283,7 @@ export default function OpeningsCatalog() {
                               type="button"
                               onClick={() => selectVariation(v.id, fam.id)}
                               data-active={active ? "true" : "false"}
-                              className="list-row opening-var-row"
+                              className="opening-var-row"
                             >
                               <span className="min-w-0 flex-1 text-left">
                                 <span className="block truncate text-[0.8125rem] font-semibold text-[var(--ink)]">
@@ -397,44 +398,43 @@ export default function OpeningsCatalog() {
   }
 
   return (
-    <div className="desk-desktop">
-      <section className="desk-rail" aria-label={t("openings.title")}>
-        {bookList}
-      </section>
-
-      <section className="desk-stage fade-rise">
-        <div className="desk-masthead">
-          <p className="eyebrow">{t("openings.eyebrow")}</p>
-          <h1>{titleName}</h1>
-          <div className="desk-masthead-meta">
-            {matched && (
-              <span className="chip chip--accent">{t("openings.book")}</span>
-            )}
-            {selected && <span className="chip">{selected.eco}</span>}
-            {selected && (
-              <span className="chip">{kindLabel(selected.kind, lang)}</span>
-            )}
+    <DeskDesktop
+      storageKey="cpa-desk-catalog"
+      leftLabel={t("openings.title")}
+      rightLabel={t("openings.ideas")}
+      left={bookList}
+      right={
+        <>
+          {ideasPanel}
+          <div className="rail-block">
+            <div className="rail-head">
+              <p className="eyebrow">{t("engine.eval")}</p>
+              <span className="desk-eval-hero !text-2xl">{evalLabel}</span>
+            </div>
+            {moveList}
           </div>
-        </div>
-
-        <div className="desk-board">{board}</div>
-      </section>
-
-      <section
-        className="desk-rail desk-rail--right"
-        aria-label={t("openings.ideas")}
-      >
-        <div className="rail-block">{ideasPanel}</div>
-        <div className="rail-block">
-          <div className="rail-head">
-            <p className="eyebrow">{t("engine.eval")}</p>
-            <span className="desk-eval-hero !text-2xl">{evalLabel}</span>
+          {settings.showCoachPanel && coachPanel}
+          {enginePanel}
+        </>
+      }
+      center={
+        <>
+          <div className="desk-masthead">
+            <p className="eyebrow">{t("openings.eyebrow")}</p>
+            <h1>{titleName}</h1>
+            <div className="desk-masthead-meta">
+              {matched && (
+                <span className="chip chip--accent">{t("openings.book")}</span>
+              )}
+              {selected && <span className="chip">{selected.eco}</span>}
+              {selected && (
+                <span className="chip">{kindLabel(selected.kind, lang)}</span>
+              )}
+            </div>
           </div>
-          {moveList}
-        </div>
-        {settings.showCoachPanel && coachPanel}
-        {enginePanel}
-      </section>
-    </div>
+          <div className="desk-board">{board}</div>
+        </>
+      }
+    />
   );
 }
